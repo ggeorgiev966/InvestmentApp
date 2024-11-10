@@ -1,0 +1,10 @@
+{% extends "portfolio/base.html" %}
+{% block content %}
+<h2>Add New Bitcoin Investment</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Add Bitcoin</button>
+    <a href="{% url 'portfolio' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

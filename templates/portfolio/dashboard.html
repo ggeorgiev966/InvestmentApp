@@ -1,0 +1,114 @@
+{% extends "portfolio/base.html" %}
+{% block content %}
+<h2>Your Investment Portfolio</h2>
+
+<div class="card mt-3">
+    <div class="card-header">Stocks</div>
+    <div class="card-body">
+        {% for stock in portfolio.stocks.all %}
+            <p>{{ stock.name }} ({{ stock.ticker }}): ${{ stock.price|floatformat:2 }}</p>
+            <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
+        {% empty %}
+            <p>No stocks in your portfolio yet.</p>
+        {% endfor %}
+        <div class="d-flex justify-content-end mt-2">
+            <a href="{% url 'add_stock' %}" class="btn btn-primary">Add Stock</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">Bitcoin</div>
+    <div class="card-body">
+        <p>Current Price: $<span id="bitcoin-price">{{ current_bitcoin_price|floatformat:2 }}</span></p>
+        {% for btc in portfolio.bitcoins.all %}
+            <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchased at: ${{ btc.purchased_at|floatformat:2 }}</p>
+            <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
+        {% empty %}
+            <p>No Bitcoin investments yet.</p>
+        {% endfor %}
+        <div class="d-flex justify-content-end mt-2">
+            <a href="{% url 'add_bitcoin' %}" class="btn btn-primary">Add Bitcoin</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">Silver</div>
+    <div class="card-body">
+        <p>Current Price: $<span id="silver-price">{{ current_silver_price|floatformat:2 }}</span></p>
+        {% for silver in portfolio.silvers.all %}
+            <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchased at: ${{ silver.purchased_at|floatformat:2 }}</p>
+            <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
+        {% empty %}
+            <p>No Silver investments yet.</p>
+        {% endfor %}
+        <div class="d-flex justify-content-end mt-2">
+            <a href="{% url 'add_silver' %}" class="btn btn-primary">Add Silver</a>
+        </div>
+    </div>
+</div>
+
+<div class="summary" style="position: absolute; bottom: 20px; right: 20px;">
+    <div class="card mt-3">
+        <div class="card-header">Investment Summary</div>
+        <div class="card-body">
+            <h5>Stocks</h5>
+            <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
+
+            <h5>Bitcoin</h5>
+            <p>Total Quantity: {{ total_bitcoin_quantity|floatformat:2 }} btc</p>
+            <p>Average Purchase Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
+            <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
+            <p>Profit/Loss: <span style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                ${{ bitcoin_profit_loss|floatformat:2 }}</span>
+            </p>
+
+            <h5>Silver</h5>
+            <p>Total Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
+            <p>Average Purchase Price: ${{ avg_silver_price|floatformat:2 }}</p>
+            <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
+            <p>Profit/Loss: <span style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                ${{ silver_profit_loss|floatformat:2 }}</span>
+            </p>
+
+            <h5>Total Investment Cost</h5>
+            <p>${{ total_investment_cost|floatformat:2 }}</p>
+
+            <h5>Total Profit/Loss</h5>
+            <p><span style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                ${{ total_profit_loss|floatformat:2 }}</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fetchBitcoinPrice() {
+        fetch("{% url 'bitcoin_price_view' %}")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('bitcoin-price').innerText = data.current_bitcoin_price;
+            })
+            .catch(error => console.error('Error fetching Bitcoin price:', error));
+    }
+
+    function fetchSilverPrice() {
+        fetch("{% url 'silver_price_view' %}")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('silver-price').innerText = data.current_silver_price;
+            })
+            .catch(error => console.error('Error fetching Silver price:', error));
+    }
+
+    setInterval(fetchBitcoinPrice, 60000); // 60000ms = 1 minute
+    setInterval(fetchSilverPrice, 60000); // 60000ms = 1 minute
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchBitcoinPrice();
+        fetchSilverPrice();
+    });
+</script>
+
+{% endblock %}
