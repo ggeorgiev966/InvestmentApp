@@ -16,19 +16,18 @@ class BitcoinForm(forms.ModelForm):
     purchased_at = forms.DateTimeField(
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
     )
-    price = forms.DecimalField(max_digits=10, decimal_places=2)  # Add the price field
+    price = forms.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         model = Bitcoin
-        fields = ['quantity', 'price', 'purchased_at']  # Include the price field
+        fields = ['quantity', 'price', 'purchased_at']
 
 
 class SilverForm(forms.ModelForm):
     purchased_at = forms.DateTimeField(
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
     )
-    price = forms.DecimalField(max_digits=10, decimal_places=2)  # Add the price field
 
     class Meta:
         model = Silver
-        fields = ['weight', 'price', 'purchased_at']  # Include the price field
+        fields = ['weight', 'price', 'purchased_at']
