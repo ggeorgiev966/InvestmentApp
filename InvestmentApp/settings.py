@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'InvestmentApp.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "investmentapp",
+        "NAME": "investmentapppnewdb",
         "USER": "postgres",
         "PASSWORD": "mysecretpassword",
         "HOST": "127.0.0.1",
@@ -127,3 +127,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'portfolio'
+LOGOUT_REDIRECT_URL = 'login'
+
+COINDESK_API_URL = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'

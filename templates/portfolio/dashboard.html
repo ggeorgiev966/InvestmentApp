@@ -5,9 +5,13 @@
 <div class="card mt-3">
     <div class="card-header">Stocks</div>
     <div class="card-body">
-        {% for stock in portfolio.stocks.all %}
-            <p>{{ stock.name }} ({{ stock.ticker }}): ${{ stock.price|floatformat:2 }}</p>
+        {% for stock in stocks %}
+            <p>{{ stock.name }} ({{ stock.ticker }}): ${{ stock.price|floatformat:2 }} - Purchased at: {{ stock.purchased_at }}</p>
             <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
+            <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
         {% empty %}
             <p>No stocks in your portfolio yet.</p>
         {% endfor %}
@@ -21,9 +25,13 @@
     <div class="card-header">Bitcoin</div>
     <div class="card-body">
         <p>Current Price: $<span id="bitcoin-price">{{ current_bitcoin_price|floatformat:2 }}</span></p>
-        {% for btc in portfolio.bitcoins.all %}
-            <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchased at: ${{ btc.purchased_at|floatformat:2 }}</p>
+        {% for btc in bitcoins %}
+            <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
             <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
+            <form method="post" action="{% url 'delete_bitcoin' btc.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
         {% empty %}
             <p>No Bitcoin investments yet.</p>
         {% endfor %}
@@ -37,9 +45,13 @@
     <div class="card-header">Silver</div>
     <div class="card-body">
         <p>Current Price: $<span id="silver-price">{{ current_silver_price|floatformat:2 }}</span></p>
-        {% for silver in portfolio.silvers.all %}
-            <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchased at: ${{ silver.purchased_at|floatformat:2 }}</p>
+        {% for silver in silvers %}
+            <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchase Price: ${{ silver.price|floatformat:2 }} - Purchased at: {{ silver.purchased_at }}</p>
             <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
+            <form method="post" action="{% url 'delete_silver' silver.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
         {% empty %}
             <p>No Silver investments yet.</p>
         {% endfor %}
