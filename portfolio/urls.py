@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 from .views import home, PortfolioView, StockCreateView, BitcoinCreateView, SilverCreateView, register, \
     bitcoin_price_view, StockUpdateView, BitcoinUpdateView, SilverUpdateView, DeleteBitcoinView, DeleteSilverView, \
-    DeleteStockView
+    DeleteStockView, ConfirmDeleteView
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -23,5 +23,6 @@ urlpatterns = [
     path('delete_bitcoin/<int:pk>/', DeleteBitcoinView.as_view(), name='delete_bitcoin'),
     path('delete_stock/<int:pk>/', DeleteStockView.as_view(), name='delete_stock'),
     path('delete_silver/<int:pk>/', DeleteSilverView.as_view(), name='delete_silver'),
+    path('confirm_delete/<str:model_name>/<int:pk>/', ConfirmDeleteView.as_view(), name='confirm_delete'),
 ]
 

@@ -8,10 +8,7 @@
         {% for stock in stocks %}
             <p>{{ stock.name }} ({{ stock.ticker }}): ${{ stock.price|floatformat:2 }} - Purchased at: {{ stock.purchased_at }}</p>
             <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
-            <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
+            <a href="{% url 'confirm_delete' 'stock' stock.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
             <p>No stocks in your portfolio yet.</p>
         {% endfor %}
@@ -28,10 +25,7 @@
         {% for btc in bitcoins %}
             <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
             <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
-            <form method="post" action="{% url 'delete_bitcoin' btc.id %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
+            <a href="{% url 'confirm_delete' 'bitcoin' btc.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
             <p>No Bitcoin investments yet.</p>
         {% endfor %}
@@ -48,10 +42,7 @@
         {% for silver in silvers %}
             <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchase Price: ${{ silver.price|floatformat:2 }} - Purchased at: {{ silver.purchased_at }}</p>
             <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
-            <form method="post" action="{% url 'delete_silver' silver.id %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
+            <a href="{% url 'confirm_delete' 'silver' silver.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
             <p>No Silver investments yet.</p>
         {% endfor %}
@@ -114,8 +105,8 @@
             .catch(error => console.error('Error fetching Silver price:', error));
     }
 
-    setInterval(fetchBitcoinPrice, 60000); 
-    setInterval(fetchSilverPrice, 60000); 
+    setInterval(fetchBitcoinPrice, 60000); // 60000ms = 1 minute
+    setInterval(fetchSilverPrice, 60000); // 60000ms = 1 minute
 
     document.addEventListener('DOMContentLoaded', function() {
         fetchBitcoinPrice();
