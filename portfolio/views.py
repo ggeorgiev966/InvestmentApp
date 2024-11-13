@@ -1,6 +1,6 @@
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView
-from .forms import StockForm, BitcoinForm, SilverForm
+from .forms import StockForm, BitcoinForm, SilverForm, ContactForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import InvestmentPortfolio, UserProfile, Silver, Stock, Bitcoin
+from django.core.mail import send_mail
 import requests
 
 class PortfolioView(LoginRequiredMixin, View):
@@ -247,6 +248,22 @@ def get_silver_price():
 def silver_price_view(request):
     current_silver_price = get_silver_price()
     return JsonResponse({'current_silver_price': current_silver_price})
+
+
+def contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            send_mail(
+                form.cleaned_data['subject'],
+                form.cleaned_data['message'],
+                form.cleaned_data['email'],
+                ['admin@admin.com'],
+            )
+            return redirect('thank_you')
+    else:
+        form = ContactForm()
+    return render(request, 'portfolio/contact.html', {'form': form})
 
 
 
