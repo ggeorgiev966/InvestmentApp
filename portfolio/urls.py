@@ -1,17 +1,15 @@
 from django.urls import path
-
-from . import views
 from .views import home, PortfolioView, StockCreateView, BitcoinCreateView, SilverCreateView, register, \
     bitcoin_price_view, StockUpdateView, BitcoinUpdateView, SilverUpdateView, DeleteBitcoinView, DeleteSilverView, \
     DeleteStockView, ConfirmDeleteView
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', home, name='home'),  # Default URL, redirects based on authentication
+    path('', home, name='home'),
     path('login/', auth_views.LoginView.as_view(template_name='portfolio/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
-    path('register/', register, name='register'),  # Register view
-    path('portfolio/', PortfolioView.as_view(), name='portfolio'),  # User dashboard
+    path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('register/', register, name='register'),
+    path('portfolio/', PortfolioView.as_view(), name='portfolio'),
     path('add-stock/', StockCreateView.as_view(), name='add_stock'),
     path('add-bitcoin/', BitcoinCreateView.as_view(), name='add_bitcoin'),
     path('add-silver/', SilverCreateView.as_view(), name='add_silver'),

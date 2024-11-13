@@ -99,9 +99,7 @@ class StockUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('portfolio')
 
 def home(request):
-    if request.user.is_authenticated:
-        return redirect('portfolio')
-    return redirect('login')
+    return render(request, 'portfolio/home.html')
 
 def register(request):
     if request.method == 'POST':

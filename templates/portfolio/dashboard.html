@@ -1,6 +1,6 @@
 {% extends "portfolio/base.html" %}
 {% block content %}
-<h2>Your Investment Portfolio</h2>
+<h2 class="text-center">Your Investment Portfolio</h2>
 
 <div class="card mt-3">
     <div class="card-header">Stocks</div>
@@ -56,9 +56,11 @@
     <div class="card mt-3">
         <div class="card-header">Investment Summary</div>
         <div class="card-body">
+            <hr>
             <h5>Stocks</h5>
             <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
-
+            
+            <hr>
             <h5>Bitcoin</h5>
             <p>Total Quantity: {{ total_bitcoin_quantity|floatformat:2 }} btc</p>
             <p>Average Purchase Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
@@ -66,7 +68,8 @@
             <p>Profit/Loss: <span style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
                 ${{ bitcoin_profit_loss|floatformat:2 }}</span>
             </p>
-
+            
+            <hr>
             <h5>Silver</h5>
             <p>Total Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
             <p>Average Purchase Price: ${{ avg_silver_price|floatformat:2 }}</p>
@@ -74,11 +77,13 @@
             <p>Profit/Loss: <span style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
                 ${{ silver_profit_loss|floatformat:2 }}</span>
             </p>
+            <hr>
 
-            <h5>Total Investment Cost</h5>
+            <h5><strong>Total Investment Cost</strong></h5>
             <p>${{ total_investment_cost|floatformat:2 }}</p>
-
-            <h5>Total Profit/Loss</h5>
+            
+            <hr>
+            <h5><strong>Total Profit/Loss</strong></h5>
             <p><span style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
                 ${{ total_profit_loss|floatformat:2 }}</span>
             </p>
