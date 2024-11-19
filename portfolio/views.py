@@ -1,5 +1,6 @@
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView
+from .apis import get_silver_price, get_bitcoin_price, get_stock_price
 from .forms import StockForm, BitcoinForm, SilverForm, ContactForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
@@ -10,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import InvestmentPortfolio, UserProfile, Silver, Stock, Bitcoin
 from django.core.mail import send_mail
-import requests
+from django.http import JsonResponse
 
 class PortfolioView(LoginRequiredMixin, View):
     login_url = 'login'
@@ -31,13 +32,13 @@ class PortfolioView(LoginRequiredMixin, View):
         total_spent_on_stocks = sum(float(stock.price) for stock in portfolio.stocks.all())
 
         # Get current Bitcoin and Silver prices
-        current_bitcoin_price = get_bitcoin_price()
+        current_bitcoin_price, bitcoin_price_message = get_bitcoin_price()
         if current_bitcoin_price is None:
             current_bitcoin_price = 0.0  # Assign a default value if price is None
         else:
             current_bitcoin_price = float(current_bitcoin_price.replace(',', ''))
 
-        current_silver_price = get_silver_price()
+        current_silver_price, silver_price_message = get_silver_price()
         if current_silver_price is None:
             current_silver_price = 0.0  # Assign a default value if price is None
 
@@ -68,10 +69,13 @@ class PortfolioView(LoginRequiredMixin, View):
             'total_profit_loss': total_profit_loss,
             'stocks': portfolio.stocks.all(),
             'bitcoins': portfolio.bitcoins.all(),
-            'silvers': portfolio.silvers.all()
+            'silvers': portfolio.silvers.all(),
+            'bitcoin_price_message': bitcoin_price_message,
+            'silver_price_message': silver_price_message,
         }
 
         return render(request, 'portfolio/dashboard.html', context)
+
 
 
 class StockCreateView(LoginRequiredMixin, View):
@@ -204,50 +208,25 @@ class ConfirmDeleteView(LoginRequiredMixin, View):
         item.delete()
         return redirect('portfolio')
 
-
-
-def get_bitcoin_price():
-    try:
-        url = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
-        response = requests.get(url)
-        data = response.json()
-        return data['bpi']['USD']['rate']
-    except Exception as e:
-        print(f"Error fetching Bitcoin price: {e}")
-        return None
-
-from django.http import JsonResponse
-
 def bitcoin_price_view(request):
-    current_bitcoin_price = get_bitcoin_price()
+    current_bitcoin_price, message = get_bitcoin_price()
+    if message:
+        return JsonResponse({'current_bitcoin_price': current_bitcoin_price, 'error': message})
     return JsonResponse({'current_bitcoin_price': current_bitcoin_price})
-
-def get_silver_price():
-    api_key = "goldapi-btin6sm3artlym-io"
-    symbol = "XAG"
-    curr = "USD"
-    date = ""
-
-    url = f"https://www.goldapi.io/api/{symbol}/{curr}{date}"
-
-    headers = {
-        "x-access-token": api_key,
-        "Content-Type": "application/json"
-    }
-
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        return data['price']
-    except requests.exceptions.RequestException as e:
-        print("Error:", str(e))
-        return None
 
 
 def silver_price_view(request):
-    current_silver_price = get_silver_price()
+    current_silver_price, message = get_silver_price()
+    if message:
+        return JsonResponse({'current_silver_price': current_silver_price, 'error': message})
     return JsonResponse({'current_silver_price': current_silver_price})
+
+def stock_price_view(request, symbol):
+    current_stock_price, message = get_stock_price(symbol)
+    if message:
+        return JsonResponse({'current_stock_price': current_stock_price, 'error': message})
+    return JsonResponse({'current_stock_price': current_stock_price})
+
 
 
 def contact(request):
@@ -258,12 +237,20 @@ def contact(request):
                 form.cleaned_data['subject'],
                 form.cleaned_data['message'],
                 form.cleaned_data['email'],
-                ['admin@admin.com'],
+                ['g.georgiev96@abv.bg'],
             )
             return redirect('thank_you')
     else:
         form = ContactForm()
     return render(request, 'portfolio/contact.html', {'form': form})
+
+# views.py
+
+from django.shortcuts import render
+
+def thank_you(request):
+    return render(request, 'portfolio/thank_you.html')
+
 
 
 
