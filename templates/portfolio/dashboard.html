@@ -6,7 +6,8 @@
     <div class="card-header">Stocks</div>
     <div class="card-body">
         {% for stock in stocks %}
-            <p>{{ stock.name }} ({{ stock.ticker }}): ${{ stock.price|floatformat:2 }} - Purchased at: {{ stock.purchased_at }}</p>
+            <p>{{ stock.name }} ({{ stock.ticker }}): Purchased Price: ${{ stock.price|floatformat:2 }} - Current Price: $<span id="current-stock-price-{{ stock.ticker }}">Loading...</span> - Purchased at: {{ stock.purchased_at }}</p>
+            <p id="stock-error-{{ stock.ticker }}" style="color: red;"></p>
             <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'confirm_delete' 'stock' stock.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
@@ -21,7 +22,7 @@
 <div class="card mt-3">
     <div class="card-header">Bitcoin</div>
     <div class="card-body">
-        <p>Current Price: $<span id="bitcoin-price">{{ current_bitcoin_price|floatformat:2 }}</span></p>
+        <p>Current Price: $<span id="bitcoin-price">Loading...</span></p>
         {% for btc in bitcoins %}
             <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
             <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
@@ -38,7 +39,7 @@
 <div class="card mt-3">
     <div class="card-header">Silver</div>
     <div class="card-body">
-        <p>Current Price: $<span id="silver-price">{{ current_silver_price|floatformat:2 }}</span></p>
+        <p>Current Price: $<span id="silver-price">Loading...</span></p>
         {% for silver in silvers %}
             <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchase Price: ${{ silver.price|floatformat:2 }} - Purchased at: {{ silver.purchased_at }}</p>
             <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
@@ -96,26 +97,57 @@
         fetch("{% url 'bitcoin_price_view' %}")
             .then(response => response.json())
             .then(data => {
-                document.getElementById('bitcoin-price').innerText = data.current_bitcoin_price;
+                if (data.error) {
+                    document.getElementById('bitcoin-error').innerText = data
+                } else {
+                    const price = parseFloat(data.current_bitcoin_price.replace(/,/g, ''))
+                    document.getElementById('bitcoin-price').innerText = price.toFixed(2);
+                }
             })
-            .catch(error => console.error('Error fetching Bitcoin price:', error));
+            .catch(error => {
+                console.error('Error fetching Bitcoin price:', error);
+                document.getElementById('bitcoin-price').innerText = "Error";
+            });
     }
 
     function fetchSilverPrice() {
         fetch("{% url 'silver_price_view' %}")
             .then(response => response.json())
             .then(data => {
-                document.getElementById('silver-price').innerText = data.current_silver_price;
+                if (data.error) {
+                    document.getElementById('silver-price').innerText = data.error;
+                } else {
+                    document.getElementById('silver-price').innerText = data.current_silver_price.toFixed(2);
+                }
             })
             .catch(error => console.error('Error fetching Silver price:', error));
     }
 
-    setInterval(fetchBitcoinPrice, 60000); // 60000ms = 1 minute
-    setInterval(fetchSilverPrice, 60000); // 60000ms = 1 minute
+    function fetchStockPrice(symbol) {
+        fetch(`/api/stock-price/${symbol}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById(`stock-error-${symbol}`).innerText = data.error;
+                    document.getElementById(`current-stock-price-${symbol}`).innerText = "API request limit exceeded";
+                } else {
+                    document.getElementById(`current-stock-price-${symbol}`).innerText = data.price.toFixed(2);
+                }
+            })
+            .catch(error => {
+                console.error(`Error fetching stock price for ${symbol}:`, error);
+                document.getElementById(`current-stock-price-${symbol}`).innerText = "Error";
+            });
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         fetchBitcoinPrice();
         fetchSilverPrice();
+        {% for stock in stocks %}
+            fetchStockPrice('{{ stock.ticker }}');
+        {% endfor %}
+        setInterval(fetchBitcoinPrice, 60000); // Refresh every 1 minute
+        setInterval(fetchSilverPrice, 60000); // Refresh every 1 minute
     });
 </script>
 
