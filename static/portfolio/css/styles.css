@@ -5,9 +5,8 @@ body, html {
     height: 100%;
 }
 
+
 .home-content {
-    position: relative;
-    z-index: 1;
     text-align: center;
     padding: 2rem;
     display: flex;

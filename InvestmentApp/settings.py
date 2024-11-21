@@ -137,3 +137,16 @@ LOGIN_REDIRECT_URL = 'portfolio'
 LOGOUT_REDIRECT_URL = 'home'
 
 COINDESK_API_URL = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
+
+from .email_config import EMAIL_USER, EMAIL_PASSWORD
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.abv.bg'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = EMAIL_USER
+EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
+
+DEFAULT_FROM_EMAIL = EMAIL_USER
+
+

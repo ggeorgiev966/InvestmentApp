@@ -53,16 +53,31 @@ def get_stock_price(symbol):
     try:
         url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={ALPHA_VANTAGE_API_KEY}&outputsize=compact'
         response = requests.get(url)
-        if response.status_code == 429:
-            return LAST_STOCK_PRICES.get(symbol), "API request limit exceeded. Displaying last available price."
         data = response.json()
-        last_refreshed = max(data['Time Series (Daily)'].keys())  # Get the most recent date
+
+
+        if "Note" in data and "Thank you for using Alpha Vantage!" in data["Note"]:
+            last_price = LAST_STOCK_PRICES.get(symbol)
+            if last_price:
+                return {"current_stock_price": last_price, "error": "API limit reached. Displaying last available price."}
+            else:
+                return {"current_stock_price": None, "error": "No last available price."}
+
+
+        last_refreshed = max(data['Time Series (Daily)'].keys())
         current_price = float(data['Time Series (Daily)'][last_refreshed]['4. close'])
+
+
         LAST_STOCK_PRICES[symbol] = current_price
-        return current_price, None
+
+        return {"current_stock_price": current_price, "error": None}
     except Exception as e:
         print(f"Error fetching stock price for {symbol}: {e}")
-        return LAST_STOCK_PRICES.get(symbol), "Error fetching stock price. Displaying last available price."
 
 
+        last_price = LAST_STOCK_PRICES.get(symbol)
+        if last_price:
+            return {"current_stock_price": last_price, "error": "Error fetching stock price. Displaying last available price."}
+        else:
+            return {"current_stock_price": None, "error": "Error fetching stock price. No data available."}
 

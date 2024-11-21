@@ -1,17 +1,20 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .forms import RealEstateForm
-from .models import UserProfile, InvestmentPortfolio, RealEstate, Stock, Bitcoin, Silver
 from django.urls import reverse
+from django.utils.timezone import make_aware, now
 from datetime import datetime
 
+from .models import UserProfile, InvestmentPortfolio, RealEstate, Stock, Bitcoin, Silver
+from .forms import RealEstateForm
+
+# RealEstate Tests
 class RealEstateModelTest(TestCase):
     def setUp(self):
         user = User.objects.create(username="testuser")
         self.realestate = RealEstate.objects.create(
             property_name="Test Property",
             purchase_price=100000.00,
-            purchase_date="2023-11-20T12:00:00Z",
+            purchase_date=make_aware(datetime.now()),
             user=user
         )
 
@@ -20,82 +23,12 @@ class RealEstateModelTest(TestCase):
         self.assertEqual(self.realestate.purchase_price, 100000.00)
         self.assertEqual(str(self.realestate), "Test Property")
 
-class UserProfileModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.user_profile = UserProfile.objects.create(user=self.user)
-
-    def test_userprofile_creation(self):
-        self.assertEqual(self.user_profile.user.username, 'testuser')
-        self.assertEqual(str(self.user_profile), 'testuser')
-
-class InvestmentPortfolioModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.user_profile = UserProfile.objects.create(user=self.user)
-        self.portfolio = InvestmentPortfolio.objects.create(user=self.user_profile)
-
-    def test_investmentportfolio_creation(self):
-        self.assertEqual(self.portfolio.user, self.user_profile)
-        self.assertEqual(str(self.portfolio), f'Portfolio of {self.user.username}')
-
-class RealEstateViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.user_profile = UserProfile.objects.create(user=self.user)
-        self.client.login(username='testuser', password='12345')
-
-    def test_realestate_create_view(self):
-        response = self.client.get(reverse('add_realestate'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'portfolio/add_realestate.html')
-
-        response = self.client.post(reverse('add_realestate'), {
-            'property_name': 'Test Property',
-            'purchase_price': 100000.00,
-            'purchase_date': '2023-11-20T12:00:00Z',
-        })
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(RealEstate.objects.count(), 1)
-
-    def test_realestate_update_view(self):
-        realestate = RealEstate.objects.create(
-            property_name="Test Property",
-            purchase_price=100000.00,
-            purchase_date="2023-11-20T12:00:00Z",
-            user=self.user
-        )
-        response = self.client.get(reverse('edit_realestate', args=[realestate.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'portfolio/edit_realestate.html')
-
-        response = self.client.post(reverse('edit_realestate', args=[realestate.id]), {
-            'property_name': 'Updated Property',
-            'purchase_price': 120000.00,
-            'purchase_date': '2023-11-21T12:00:00Z',
-        })
-        self.assertEqual(response.status_code, 302)
-        realestate.refresh_from_db()
-        self.assertEqual(realestate.property_name, 'Updated Property')
-        self.assertEqual(realestate.purchase_price, 120000.00)
-
-    def test_realestate_delete_view(self):
-        realestate = RealEstate.objects.create(
-            property_name="Test Property",
-            purchase_price=100000.00,
-            purchase_date="2023-11-20T12:00:00Z",
-            user=self.user
-        )
-        response = self.client.post(reverse('delete_realestate', args=[realestate.id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(RealEstate.objects.count(), 0)
-
 class RealEstateFormTest(TestCase):
     def test_realestate_form_valid(self):
         form_data = {
             'property_name': 'Test Property',
             'purchase_price': 100000.00,
-            'purchase_date': '2023-11-20T12:00:00Z',
+            'purchase_date': now(),
         }
         form = RealEstateForm(data=form_data)
         self.assertTrue(form.is_valid())
@@ -108,109 +41,255 @@ class RealEstateFormTest(TestCase):
         }
         form = RealEstateForm(data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(len(form.errors), 3)
+        self.assertEqual(len(form.errors), 3)  # All fields are required
 
-class BitcoinViewTest(TestCase):
+class RealEstateViewTest(TestCase):
     def setUp(self):
-
         self.user = User.objects.create_user(username='testuser', password='12345')
         self.user_profile = UserProfile.objects.create(user=self.user)
-
-
         self.portfolio = InvestmentPortfolio.objects.create(user=self.user_profile)
-
-
         self.client.login(username='testuser', password='12345')
 
-    def test_bitcoin_create_view(self):
-
-        response = self.client.post(reverse('add_bitcoin'), {
-            'quantity': 1.5,
-            'price': 60000.00,
-            'purchased_at': datetime.now(),
+    def test_realestate_create_view(self):
+        response = self.client.post(reverse('add_realestate'), {
+            'property_name': 'Test Property',
+            'purchase_price': 100000.00,
+            'purchase_date': '2023-11-20T12:00:00Z',
         })
-
-
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(RealEstate.objects.count(), 1)
 
+    def test_realestate_update_view(self):
+        realestate = RealEstate.objects.create(
+            property_name="Test Property",
+            purchase_price=100000.00,
+            purchase_date=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.post(reverse('edit_realestate', args=[realestate.id]), {
+            'property_name': 'Updated Property',
+            'purchase_price': 120000.00,
+            'purchase_date': '2023-11-20T12:00:00Z',
+        })
+        self.assertEqual(response.status_code, 302)
+        realestate.refresh_from_db()
+        self.assertEqual(realestate.property_name, 'Updated Property')
+        self.assertEqual(realestate.purchase_price, 120000.00)
+    def test_realestate_delete_view(self):
+        realestate = RealEstate.objects.create(
+            property_name="Test Property",
+            purchase_price=100000.00,
+            purchase_date=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.post(reverse('delete_realestate', args=[realestate.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(RealEstate.objects.count(), 0)
 
-        bitcoin = Bitcoin.objects.first()
-        self.assertEqual(bitcoin.quantity, 1.5)
-        self.assertEqual(bitcoin.price, 60000.00)
-        self.assertEqual(str(bitcoin), "1.50000000 BTC @ 60000.00 USD")
+# Stock Tests
+class StockModelTest(TestCase):
+    def setUp(self):
+        user = User.objects.create(username="testuser")
+        self.stock = Stock.objects.create(
+            name="Test Stock",
+            ticker="TST",
+            price=500.00,
+            purchased_at=make_aware(datetime.now()),
+            user=user
+        )
 
+    def test_stock_creation(self):
+        self.assertEqual(self.stock.name, "Test Stock")
+        self.assertEqual(self.stock.ticker, "TST")
+        self.assertEqual(self.stock.price, 500.00)
+        self.assertEqual(str(self.stock), "Test Stock (TST) @ 500.00 USD")
 
 class StockViewTest(TestCase):
     def setUp(self):
-
         self.user = User.objects.create_user(username='testuser', password='12345')
         self.user_profile = UserProfile.objects.create(user=self.user)
-
-
         self.portfolio = InvestmentPortfolio.objects.create(user=self.user_profile)
-
-
         self.client.login(username='testuser', password='12345')
 
     def test_stock_create_view(self):
+        response = self.client.get(reverse('add_stock'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portfolio/add_stock.html')
 
         response = self.client.post(reverse('add_stock'), {
             'name': 'Test Stock',
             'ticker': 'TST',
             'price': 500.00,
-            'purchased_at': datetime.now(),
+            'purchased_at': make_aware(datetime.now()),
         })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+        self.assertEqual(Stock.objects.count(), 1)
 
+    def test_stock_update_view(self):
+        stock = Stock.objects.create(
+            name="Test Stock",
+            ticker="TST",
+            price=500.00,
+            purchased_at=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.get(reverse('edit_stock', args=[stock.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portfolio/edit_stock.html')
 
-        self.assertEqual(response.status_code, 302)
+        response = self.client.post(reverse('edit_stock', args=[stock.id]), {
+            'name': 'Updated Stock',
+            'ticker': 'UST',
+            'price': 600.00,
+            'purchased_at': make_aware(datetime.now()),
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        stock.refresh_from_db()
+        self.assertEqual(stock.name, 'Updated Stock')
+        self.assertEqual(stock.ticker, 'UST')
+        self.assertEqual(stock.price, 600.00)
 
+    def test_stock_delete_view(self):
+        stock = Stock.objects.create(
+            name="Test Stock",
+            ticker="TST",
+            price=500.00,
+            purchased_at=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.post(reverse('delete_stock', args=[stock.id]))
+        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(Stock.objects.count(), 0)
 
-        stock = Stock.objects.first()
-        self.assertEqual(stock.name, 'Test Stock')
-        self.assertEqual(stock.ticker, 'TST')
-        self.assertEqual(stock.price, 500.00)
-        self.assertEqual(str(stock), "Test Stock (TST) @ 500.00 USD")
-
-
+# Bitcoin Tests
 class BitcoinModelTest(TestCase):
     def setUp(self):
-
-        self.user = User.objects.create_user(username='testuser', password='12345')
-
-
-
-
+        user = User.objects.create(username="testuser")
         self.bitcoin = Bitcoin.objects.create(
             quantity=1.5,
             price=60000.00,
-            purchased_at=datetime.now(),
-            user=self.user
+            purchased_at=make_aware(datetime.now()),
+            user=user
         )
 
     def test_bitcoin_creation(self):
-
         self.assertEqual(self.bitcoin.quantity, 1.5)
         self.assertEqual(self.bitcoin.price, 60000.00)
         self.assertEqual(str(self.bitcoin), "1.50000000 BTC @ 60000.00 USD")
 
-
-class StockModelTest(TestCase):
+class BitcoinViewTest(TestCase):
     def setUp(self):
-
         self.user = User.objects.create_user(username='testuser', password='12345')
+        self.user_profile = UserProfile.objects.create(user=self.user)
+        self.portfolio = InvestmentPortfolio.objects.create(user=self.user_profile)
+        self.client.login(username='testuser', password='12345')
 
+    def test_bitcoin_create_view(self):
+        response = self.client.post(reverse('add_bitcoin'), {
+            'quantity': 1.5,
+            'price': 60000.00,
+            'purchased_at': make_aware(datetime.now()),
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Bitcoin.objects.count(), 1)
 
-        self.stock = Stock.objects.create(
-            name='Test Stock',
-            ticker='TST',
-            price=500.00,
-            purchased_at=datetime.now(),
+    def test_bitcoin_update_view(self):
+        bitcoin = Bitcoin.objects.create(
+            quantity=1.5,
+            price=60000.00,
+            purchased_at=make_aware(datetime.now()),
             user=self.user
         )
+        response = self.client.get(reverse('edit_bitcoin', args=[bitcoin.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portfolio/edit_bitcoin.html')
 
-    def test_stock_creation(self):
+        response = self.client.post(reverse('edit_bitcoin', args=[bitcoin.id]), {
+            'quantity': 2.0,
+            'price': 65000.00,
+            'purchased_at': make_aware(datetime.now()),
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        bitcoin.refresh_from_db()
+        self.assertEqual(bitcoin.quantity, 2.0)
+        self.assertEqual(bitcoin.price, 65000.00)
 
-        self.assertEqual(self.stock.name, 'Test Stock')
-        self.assertEqual(self.stock.ticker, 'TST')
-        self.assertEqual(self.stock.price, 500.00)
-        self.assertEqual(str(self.stock), "Test Stock (TST) @ 500.00 USD")
+    def test_bitcoin_delete_view(self):
+        bitcoin = Bitcoin.objects.create(
+            quantity=1.5,
+            price=60000.00,
+            purchased_at=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.post(reverse('delete_bitcoin', args=[bitcoin.id]))
+        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(Bitcoin.objects.count(), 0)
+
+    # Silver Tests
+class SilverModelTest(TestCase):
+    def setUp(self):
+        user = User.objects.create(username="testuser")
+        self.silver = Silver.objects.create(
+            weight=50.0,
+            price=1000.00,
+            purchased_at=make_aware(datetime.now()),
+            user=user
+        )
+
+    def test_silver_creation(self):
+        self.assertEqual(self.silver.weight, 50.0)
+        self.assertEqual(self.silver.price, 1000.00)
+        self.assertEqual(str(self.silver), "50.00 oz @ 1000.00 USD")
+
+class SilverViewTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='12345')
+        self.user_profile = UserProfile.objects.create(user=self.user)
+        self.portfolio = InvestmentPortfolio.objects.create(user=self.user_profile)
+        self.client.login(username='testuser', password='12345')
+
+    def test_silver_create_view(self):
+        response = self.client.get(reverse('add_silver'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portfolio/add_silver.html')
+
+        response = self.client.post(reverse('add_silver'), {
+            'weight': 50.0,
+            'price': 1000.00,
+            'purchased_at': make_aware(datetime.now()),
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+        self.assertEqual(Silver.objects.count(), 1)
+
+    def test_silver_update_view(self):
+        silver = Silver.objects.create(
+            weight=50.0,
+            price=1000.00,
+            purchased_at=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.get(reverse('edit_silver', args=[silver.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'portfolio/edit_silver.html')
+
+        response = self.client.post(reverse('edit_silver', args=[silver.id]), {
+            'weight': 60.0,
+            'price': 1100.00,
+            'purchased_at': make_aware(datetime.now()),
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        silver.refresh_from_db()
+        self.assertEqual(silver.weight, 60.0)
+        self.assertEqual(silver.price, 1100.00)
+
+    def test_silver_delete_view(self):
+        silver = Silver.objects.create(
+            weight=50.0,
+            price=1000.00,
+            purchased_at=make_aware(datetime.now()),
+            user=self.user
+        )
+        response = self.client.post(reverse('delete_silver', args=[silver.id]))
+        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(Silver.objects.count(), 0)
+

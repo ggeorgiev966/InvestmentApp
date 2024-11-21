@@ -1,7 +1,8 @@
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView
+from InvestmentApp import settings
 from .apis import get_silver_price, get_bitcoin_price, get_stock_price
-from .forms import StockForm, BitcoinForm, SilverForm, ContactForm
+from .forms import StockForm, BitcoinForm, SilverForm, ContactForm, RealEstateForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,8 +10,8 @@ from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import InvestmentPortfolio, UserProfile, Silver, Stock, Bitcoin
-from django.core.mail import send_mail
+from .models import InvestmentPortfolio, UserProfile, Silver, Stock, Bitcoin, RealEstate
+from django.core.mail import send_mail, EmailMessage
 from django.http import JsonResponse
 
 class PortfolioView(LoginRequiredMixin, View):
@@ -30,6 +31,7 @@ class PortfolioView(LoginRequiredMixin, View):
         avg_silver_price = total_silver_price / total_silver_weight if total_silver_weight else 0.0
 
         total_spent_on_stocks = sum(float(stock.price) for stock in portfolio.stocks.all())
+        total_real_estate_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
 
         # Get current Bitcoin and Silver prices
         current_bitcoin_price, bitcoin_price_message = get_bitcoin_price()
@@ -47,7 +49,7 @@ class PortfolioView(LoginRequiredMixin, View):
         silver_profit_loss = (current_silver_price - avg_silver_price) * total_silver_weight
 
         # Calculate total investment cost
-        total_investment_cost = total_bitcoin_price + total_silver_price + total_spent_on_stocks
+        total_investment_cost = total_bitcoin_price + total_silver_price + total_spent_on_stocks + total_real_estate_price
 
         # Calculate total profit/loss
         total_profit_loss = bitcoin_profit_loss + silver_profit_loss
@@ -61,6 +63,7 @@ class PortfolioView(LoginRequiredMixin, View):
             'avg_silver_price': avg_silver_price,
             'total_silver_price': total_silver_price,
             'total_spent_on_stocks': total_spent_on_stocks,
+            'total_real_estate_price': total_real_estate_price,
             'current_bitcoin_price': current_bitcoin_price,
             'current_silver_price': current_silver_price,
             'total_investment_cost': total_investment_cost,
@@ -70,6 +73,7 @@ class PortfolioView(LoginRequiredMixin, View):
             'stocks': portfolio.stocks.all(),
             'bitcoins': portfolio.bitcoins.all(),
             'silvers': portfolio.silvers.all(),
+            'realestates': RealEstate.objects.filter(user=request.user),
             'bitcoin_price_message': bitcoin_price_message,
             'silver_price_message': silver_price_message,
         }
@@ -191,6 +195,7 @@ class ConfirmDeleteView(LoginRequiredMixin, View):
         'stock': Stock,
         'bitcoin': Bitcoin,
         'silver': Silver,
+        'realestate': RealEstate
     }
 
     def get(self, request, model_name, pk):
@@ -208,6 +213,33 @@ class ConfirmDeleteView(LoginRequiredMixin, View):
         item.delete()
         return redirect('portfolio')
 
+@method_decorator(login_required, name='dispatch')
+class RealEstateCreateView(View):
+    def get(self, request):
+        form = RealEstateForm()
+        return render(request, 'portfolio/add_realestate.html', {'form': form})
+
+    def post(self, request):
+        form = RealEstateForm(request.POST)
+        if form.is_valid():
+            realestate = form.save(commit=False)
+            realestate.user = request.user
+            realestate.save()
+            return redirect('portfolio')
+        return render(request, 'portfolio/add_realestate.html', {'form': form})
+
+class RealEstateUpdateView(LoginRequiredMixin, UpdateView):
+    model = RealEstate
+    form_class = RealEstateForm
+    template_name = 'portfolio/edit_realestate.html'
+    success_url = reverse_lazy('portfolio')
+
+class DeleteRealEstateView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        realestate = get_object_or_404(RealEstate, pk=pk)
+        realestate.delete()
+        return redirect('portfolio')
+
 def bitcoin_price_view(request):
     current_bitcoin_price, message = get_bitcoin_price()
     if message:
@@ -222,31 +254,37 @@ def silver_price_view(request):
     return JsonResponse({'current_silver_price': current_silver_price})
 
 def stock_price_view(request, symbol):
-    current_stock_price, message = get_stock_price(symbol)
-    if message:
-        return JsonResponse({'current_stock_price': current_stock_price, 'error': message})
-    return JsonResponse({'current_stock_price': current_stock_price})
-
+    result = get_stock_price(symbol)
+    print(f"Fetched price for {symbol}: {result['current_stock_price']}, Message: {result['error']}")  # Debug print
+    return JsonResponse(result)
 
 
 def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
-            send_mail(
-                form.cleaned_data['subject'],
-                form.cleaned_data['message'],
-                form.cleaned_data['email'],
-                ['g.georgiev96@abv.bg'],
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            user_email = form.cleaned_data['email']
+            from_email = settings.EMAIL_HOST_USER
+            recipient_list = ['g.georgiev96@abv.bg']
+
+
+            full_message = f"From: {user_email}\n\nMessage:\n{message}"
+
+            email = EmailMessage(
+                subject,
+                full_message,
+                from_email,
+                recipient_list,
+                reply_to=[user_email]
             )
+            email.send(fail_silently=False)
             return redirect('thank_you')
     else:
         form = ContactForm()
     return render(request, 'portfolio/contact.html', {'form': form})
 
-# views.py
-
-from django.shortcuts import render
 
 def thank_you(request):
     return render(request, 'portfolio/thank_you.html')
