@@ -24,12 +24,12 @@ def get_silver_price():
         data = response.json()
 
         if response.status_code == [429, 403]:
-            return LAST_SILVER_PRICE, "API request limit exceeded. Displaying last available price"
+            return LAST_SILVER_PRICE, "API request limit exceeded. API limit reached."
         LAST_SILVER_PRICE = data['price']
         return LAST_SILVER_PRICE, None
     except Exception as e:
         print(f"Error fetching silver price: {e}")
-        return LAST_SILVER_PRICE, "Error fetching silver price. Displaying last available price."
+        return LAST_SILVER_PRICE, "Error fetching silver price. API limit reached."
 
 
 def get_bitcoin_price():
@@ -84,5 +84,5 @@ def get_stock_price(symbol):
         if last_price:
             return {"current_stock_price": float(last_price), "error": "Error fetching stock price. Displaying last available price."}
         else:
-            return {"current_stock_price": 0.0, "error": "Error fetching stock price. No data available."}
+            return {"current_stock_price": 0.0, "error": "Error fetching stock price. API limit reached."}
 
