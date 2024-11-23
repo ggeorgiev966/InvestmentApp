@@ -32,7 +32,7 @@ class PortfolioView(View):
         total_silver_price = sum(float(silver.weight) * float(silver.price) for silver in portfolio.silvers.all())
         avg_silver_price = total_silver_price / total_silver_weight if total_silver_weight else 0.0
 
-        total_spent_on_stocks = sum(float(stock.price) for stock in portfolio.stocks.all())
+        total_spent_on_stocks = 0.0
         total_real_estate_purchase_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
         total_real_estate_evaluation_price = sum(float(realestate.current_evaluation_price) for realestate in RealEstate.objects.filter(user=request.user) if realestate.current_evaluation_price)
 
@@ -59,9 +59,6 @@ class PortfolioView(View):
         real_estate_profit_loss = total_real_estate_evaluation_price - total_real_estate_purchase_price
         real_estate_profit_percentage = (real_estate_profit_loss / total_real_estate_purchase_price) * 100 if total_real_estate_purchase_price else 0.0
 
-        # Calculate total investment cost
-        total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
-
         # Calculate stock totals and profit/loss
         stock_data = {}
         for stock in portfolio.stocks.all():
@@ -69,7 +66,9 @@ class PortfolioView(View):
                 stock_data[stock.ticker] = {'quantity': 0, 'total_price': 0, 'error': ""}
             stock_data[stock.ticker]['quantity'] += float(stock.quantity)
             stock_data[stock.ticker]['total_price'] += float(stock.quantity) * float(stock.price)
+            total_spent_on_stocks += float(stock.quantity) * float(stock.price)
 
+        total_stock_profit_loss = 0.0
         for ticker, data in stock_data.items():
             data['avg_price'] = data['total_price'] / data['quantity'] if data['quantity'] else 0.0
             current_price_data = get_stock_price(ticker)
@@ -77,10 +76,13 @@ class PortfolioView(View):
                 current_price_data['current_stock_price'], (int, float)) else 0.0
             data['error'] = current_price_data['error']
             data['profit_loss'] = (data['current_price'] - data['avg_price']) * data['quantity']
-            data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data[
-                'total_price'] else 0.0
+            data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data['total_price'] else 0.0
+            total_stock_profit_loss += data['profit_loss']
 
-        total_stock_profit_loss = sum(data['profit_loss'] for data in stock_data.values())
+        # Calculate total investment cost
+        total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
+
+        # Calculate total profit/loss
         total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss + total_stock_profit_loss
         total_profit_percentage = (total_profit_loss / total_investment_cost) * 100 if total_investment_cost else 0.0
 
@@ -103,6 +105,8 @@ class PortfolioView(View):
             'silver_profit_loss': silver_profit_loss,
             'bitcoin_profit_percentage': bitcoin_profit_percentage,
             'silver_profit_percentage': silver_profit_percentage,
+            'total_spent_on_stocks': total_spent_on_stocks,
+            'total_stock_profit_loss': total_stock_profit_loss,
             'total_profit_loss': total_profit_loss,
             'total_profit_percentage': total_profit_percentage,
             'stocks': portfolio.stocks.all(),
@@ -115,6 +119,7 @@ class PortfolioView(View):
         }
 
         return render(request, 'portfolio/dashboard.html', context)
+
 
 
 @method_decorator(login_required, name='dispatch')

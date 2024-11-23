@@ -83,41 +83,41 @@
 
 
         <div class="col-md-4">
-            <div class="investment-summary-container">
-                <div class="investment-summary">
-                    <div class="card-header">Investment Summary</div>
-                    <div class="card-body">
+    <div class="investment-summary-container">
+        <div class="investment-summary">
+            <div class="card-header">Investment Summary</div>
+            <div class="card-body">
+                <hr>
+                <h5><strong>Stocks</strong></h5>
+                <div class="stocks-summary">
+                    {% for ticker, data in stock_data.items %}
+                        <p><strong>{{ ticker }}</strong></p>
+                        <ul>
+                            <li>Quantity: {{ data.quantity|floatformat:2 }}</li>
+                            <li>Avg Buy Price: ${{ data.avg_price|floatformat:2 }}</li>
+                            <li>Current Price: ${{ data.current_price|floatformat:2 }}</li>
+                            <li>Profit/Loss: <span class="profit-loss-text" style="color: {% if data.profit_loss >= 0 %}green{% else %}red{% endif %};">
+                                ${{ data.profit_loss|floatformat:2 }} {{ data.profit_percentage|floatformat:2 }}%</span></li>
+                        </ul>
                         <hr>
-                        <h5><strong>Stocks</strong></h5>
-                        <div class="stocks-summary">
-                            {% for ticker, data in stock_data.items %}
-                                <p><strong>{{ ticker }}</strong></p>
-                                <ul>
-                                    <li>Quantity: {{ data.quantity|floatformat:2 }}</li>
-                                    <li>Avg Buy Price: ${{ data.avg_price|floatformat:2 }}</li>
-                                    <li>Current Price: ${{ data.current_price|floatformat:2 }}</li>
-                                    <li>Profit/Loss: <span class="profit-loss-text" style="color: {% if data.profit_loss >= 0 %}green{% else %}red{% endif %};">
-                                        ${{ data.profit_loss|floatformat:2 }} {{ data.profit_percentage|floatformat:2 }}%</span></li>
-                                </ul>
-                                <hr>
-                            {% endfor %}
-                            <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
-                            <p>Total Stock Profit/Loss: <span class="profit-loss-text" style="color: {% if total_stock_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                                ${{ total_stock_profit_loss|floatformat:2 }}
-                            </span></p>
-                        </div>
+                    {% endfor %}
+                    <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
+                    <p>Total Stock Profit/Loss: <span class="profit-loss-text" style="color: {% if total_stock_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                        ${{ total_stock_profit_loss|floatformat:2 }}
+                    </span></p>
+                </div>
 
-                        <hr>
-                        <h5><strong>Bitcoin</strong></h5>
-                        <p>Total Bitcoin Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
-                        <p>Average Bitcoin Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
-                        <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
-                        <p>Bitcoin Profit/Loss: <span class="profit-loss-text" style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                            ${{ bitcoin_profit_loss|floatformat:2 }} ({{ bitcoin_profit_percentage|floatformat:2 }}%)</span>
-                        </p>
+                <hr>
+                <h5><strong>Bitcoin</strong></h5>
+                <p>Total Bitcoin Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
+                <p>Average Bitcoin Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
+                <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
+                <p>Bitcoin Profit/Loss: <span class="profit-loss-text" style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                    ${{ bitcoin_profit_loss|floatformat:2 }} ({{ bitcoin_profit_percentage|floatformat:2 }}%)</span>
+                </p>
 
-                        <hr>
-                        <h5><strong>Silver</strong></h5>
+                <hr>
+                <h5><strong>Silver</strong></h5>
                         <p>Total Silver Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
                         <p>Average Silver Price: ${{ avg_silver_price|floatformat:2 }}</p>
                         <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
@@ -160,7 +160,7 @@
             if (data.current_stock_price !== undefined) {
                 if (data.current_stock_price !== null) {
                     // Valid stock price
-                    const price = parseFloat(data.current_stock_price);  
+                    const price = parseFloat(data.current_stock_price);
                     priceElement.innerText = price.toFixed(2);
                     errorElement.innerText = data.error ? data.error : "";  // Display API-related error if available
                 } else {
