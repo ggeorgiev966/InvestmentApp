@@ -1,121 +1,152 @@
 {% extends "portfolio/base.html" %}
+
 {% block content %}
-<h2 class="text-center">Your Investment Portfolio</h2>
+<h2 class="text-center mt-4">Your Investment Portfolio</h2>
 
-<div class="card mt-3">
-    <div class="card-header">Stocks</div>
-    <div class="card-body">
-        {% for stock in stocks %}
-            <p>{{ stock.name }} ({{ stock.ticker }}): Purchase Price: ${{ stock.price|floatformat:2 }} - Current Price: $<span id="current-stock-price-{{ stock.ticker }}">Loading...</span> - Purchased at: {{ stock.purchased_at }}</p>
-            <p id="stock-error-{{ stock.ticker }}" style="color: red;"></p>
-            <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
-            <a href="{% url 'confirm_delete' 'stock' stock.id %}" class="btn btn-danger">Delete</a>
-        {% empty %}
-            <p>No stocks in your portfolio yet.</p>
-        {% endfor %}
-        <div class="d-flex justify-content-end mt-2">
-            <a href="{% url 'add_stock' %}" class="btn btn-primary">Add Stock</a>
+<div class="container-fluid mt-4">
+    <div class="row">
+
+        <div class="col-md-8">
+
+            <div class="card mt-0">
+                <div class="card-header">Stocks</div>
+                <div class="card-body">
+                    {% for stock in stocks %}
+                        <p>{{ stock.name }} ({{ stock.ticker }}): Quantity {{ stock.quantity }} - Purchase Price: ${{ stock.price|floatformat:2 }} - Current Price: $<span id="current-stock-price-{{ stock.ticker }}">Loading...</span> - Purchased at: {{ stock.purchased_at }}</p>
+                        <p id="stock-error-{{ stock.ticker }}" style="color: red;"></p>
+                        <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
+                        <a href="{% url 'confirm_delete' 'stock' stock.id %}" class="btn btn-danger">Delete</a>
+                    {% empty %}
+                        <p>No stocks in your portfolio yet.</p>
+                    {% endfor %}
+                    <div class="d-flex justify-content-end mt-2">
+                        <a href="{% url 'add_stock' %}" class="btn btn-primary">Add Stock</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="card mt-3">
+                <div class="card-header">Bitcoin</div>
+                <div class="card-body">
+                    <p>Current Price: $<span id="bitcoin-price">Loading...</span></p>
+                    <p id="bitcoin-error" style="color: red;"></p>
+                    {% for btc in bitcoins %}
+                        <p>Quantity: {{ btc.quantity|floatformat:5 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
+                        <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
+                        <a href="{% url 'confirm_delete' 'bitcoin' btc.id %}" class="btn btn-danger">Delete</a>
+                    {% empty %}
+                        <p>No Bitcoin investments yet.</p>
+                    {% endfor %}
+                    <div class="d-flex justify-content-end mt-2">
+                        <a href="{% url 'add_bitcoin' %}" class="btn btn-primary">Add Bitcoin</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="card mt-3">
+                <div class="card-header">Silver</div>
+                <div class="card-body">
+                    <p>Current Price: $<span id="silver-price">Loading...</span></p>
+                    <p id="silver-error" style="color: red;"></p>
+                    {% for silver in silvers %}
+                        <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchase Price: ${{ silver.price|floatformat:2 }} - Purchased at: {{ silver.purchased_at }}</p>
+                        <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
+                        <a href="{% url 'confirm_delete' 'silver' silver.id %}" class="btn btn-danger">Delete</a>
+                    {% empty %}
+                        <p>No Silver investments yet.</p>
+                    {% endfor %}
+                    <div class="d-flex justify-content-end mt-2">
+                        <a href="{% url 'add_silver' %}" class="btn btn-primary">Add Silver</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="card mt-3">
+                <div class="card-header">Real Estate</div>
+                <div class="card-body">
+                    {% for realestate in realestates %}
+                        <p>{{ realestate.property_name }}: Purchase Price: ${{ realestate.purchase_price|floatformat:2 }} - Current evaluation price: ${{ realestate.current_evaluation_price|floatformat:2 }} - Purchased at: {{ realestate.purchase_date }}</p>
+                        <a href="{% url 'edit_realestate' realestate.id %}" class="btn btn-secondary">Edit</a>
+                        <a href="{% url 'confirm_delete' 'realestate' realestate.id %}" class="btn btn-danger">Delete</a>
+                    {% empty %}
+                        <p>No real estate investments yet.</p>
+                    {% endfor %}
+                    <div class="d-flex justify-content-end mt-2">
+                        <a href="{% url 'add_realestate' %}" class="btn btn-primary">Add Real Estate</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-4">
+            <div class="investment-summary-container">
+                <div class="investment-summary">
+                    <div class="card-header">Investment Summary</div>
+                    <div class="card-body">
+                        <hr>
+                        <h5><strong>Stocks</strong></h5>
+                        <div class="stocks-summary">
+                            {% for ticker, data in stock_data.items %}
+                                <p><strong>{{ ticker }}</strong></p>
+                                <ul>
+                                    <li>Quantity: {{ data.quantity|floatformat:2 }}</li>
+                                    <li>Avg Buy Price: ${{ data.avg_price|floatformat:2 }}</li>
+                                    <li>Current Price: ${{ data.current_price|floatformat:2 }}</li>
+                                    <li>Profit/Loss: <span class="profit-loss-text" style="color: {% if data.profit_loss >= 0 %}green{% else %}red{% endif %};">
+                                        ${{ data.profit_loss|floatformat:2 }} {{ data.profit_percentage|floatformat:2 }}%</span></li>
+                                </ul>
+                                <hr>
+                            {% endfor %}
+                            <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
+                            <p>Total Stock Profit/Loss: <span class="profit-loss-text" style="color: {% if total_stock_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                                ${{ total_stock_profit_loss|floatformat:2 }}
+                            </span></p>
+                        </div>
+
+                        <hr>
+                        <h5><strong>Bitcoin</strong></h5>
+                        <p>Total Bitcoin Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
+                        <p>Average Bitcoin Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
+                        <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
+                        <p>Bitcoin Profit/Loss: <span class="profit-loss-text" style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                            ${{ bitcoin_profit_loss|floatformat:2 }} ({{ bitcoin_profit_percentage|floatformat:2 }}%)</span>
+                        </p>
+
+                        <hr>
+                        <h5><strong>Silver</strong></h5>
+                        <p>Total Silver Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
+                        <p>Average Silver Price: ${{ avg_silver_price|floatformat:2 }}</p>
+                        <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
+                        <p>Silver Profit/Loss: <span class="profit-loss-text" style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                            ${{ silver_profit_loss|floatformat:2 }} ({{ silver_profit_percentage|floatformat:2 }}%)</span>
+                        </p>
+
+                        <hr>
+                        <h5><strong>Real Estate</strong></h5>
+                        <p>Total Spent on Real Estate: ${{ total_real_estate_purchase_price|floatformat:2 }}</p>
+                        <p>Total Real Estate Evaluation Price: ${{ total_real_estate_evaluation_price }}</p>
+                        <p>Real Estate Profit/Loss <span class="profit-loss-text" style="color: {% if real_estate_profit_loss >= 0 %}green{% else %}red{% endif %};"> ${{ real_estate_profit_loss|floatformat:2 }} ({{ real_estate_profit_percentage|floatformat:2 }}%)</p>
+
+                        <hr>
+                        <h5><strong>Total Investment Cost</strong></h5>
+                        <p>${{ total_investment_cost|floatformat:2 }}</p>
+
+                        <hr>
+                        <h5><strong>Total Profit/Loss</strong></h5>
+                        <p><span class="profit-loss-text" style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                            ${{ total_profit_loss|floatformat:2 }} ({{ total_profit_percentage|floatformat:2 }}%)</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="card mt-3">
-    <div class="card-header">Bitcoin</div>
-    <div class="card-body">
-        <p>Current Price: $<span id="bitcoin-price">Loading...</span></p>
-        <p id="bitcoin-error" style="color: red;"></p>
-        {% for btc in bitcoins %}
-            <p>Quantity: {{ btc.quantity|floatformat:5 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
-            <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
-            <a href="{% url 'confirm_delete' 'bitcoin' btc.id %}" class="btn btn-danger">Delete</a>
-        {% empty %}
-            <p>No Bitcoin investments yet.</p>
-        {% endfor %}
-        <div class="d-flex justify-content-end mt-2">
-            <a href="{% url 'add_bitcoin' %}" class="btn btn-primary">Add Bitcoin</a>
-        </div>
-    </div>
 </div>
-
-<div class="card mt-3">
-    <div class="card-header">Silver</div>
-    <div class="card-body">
-        <p>Current Price: $<span id="silver-price">Loading...</span></p>
-        <p id="silver-error" style="color: red;"></p>
-        {% for silver in silvers %}
-            <p>Weight: {{ silver.weight|floatformat:2 }} oz - Purchase Price: ${{ silver.price|floatformat:2 }} - Purchased at: {{ silver.purchased_at }}</p>
-            <a href="{% url 'edit_silver' silver.id %}" class="btn btn-secondary">Edit</a>
-            <a href="{% url 'confirm_delete' 'silver' silver.id %}" class="btn btn-danger">Delete</a>
-        {% empty %}
-            <p>No Silver investments yet.</p>
-        {% endfor %}
-        <div class="d-flex justify-content-end mt-2">
-            <a href="{% url 'add_silver' %}" class="btn btn-primary">Add Silver</a>
-        </div>
-    </div>
-</div>
-
-<div class="card mt-3">
-    <div class="card-header">Real Estate</div>
-    <div class="card-body">
-        {% for realestate in realestates %}
-            <p>{{ realestate.property_name }}: Purchase Price: ${{ realestate.purchase_price|floatformat:2 }} - Current evaluation price: ${{ realestate.current_evaluation_price|floatformat:2 }} - Purchased at: {{ realestate.purchase_date }}</p>
-            <a href="{% url 'edit_realestate' realestate.id %}" class="btn btn-secondary">Edit</a>
-            <a href="{% url 'confirm_delete' 'realestate' realestate.id %}" class="btn btn-danger">Delete</a>
-        {% empty %}
-            <p>No real estate investments yet.</p>
-        {% endfor %}
-        <div class="d-flex justify-content-end mt-2">
-            <a href="{% url 'add_realestate' %}" class="btn btn-primary">Add Real Estate</a>
-        </div>
-    </div>
-</div>
-
-<div class="summary" style="position: absolute; bottom: -110px; right: 20px;">
-    <div class="investment-summary">
-        <div class="card-header">Investment Summary</div>
-        <div class="card-body">
-            <hr>
-            <h5>Stocks</h5>
-            <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
-            
-            <hr>
-            <h5>Bitcoin</h5>
-            <p>Total Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
-            <p>Average Purchase Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
-            <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
-            <p>Profit/Loss: <span style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ bitcoin_profit_loss|floatformat:2 }} ({{ bitcoin_profit_percentage|floatformat:2 }}%)</span>
-            </p>
-            
-            <hr>
-            <h5>Silver</h5>
-            <p>Total Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
-            <p>Average Purchase Price: ${{ avg_silver_price|floatformat:2 }}</p>
-            <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
-            <p>Profit/Loss: <span style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ silver_profit_loss|floatformat:2 }} ({{ silver_profit_percentage|floatformat:2 }}%)</span>
-            </p>
-            
-            <hr>
-            <h5>Real Estate</h5>
-            <p>Total Spent on Real Estate: ${{ total_real_estate_purchase_price|floatformat:2 }}</p>
-            <p>Total Real Estate Evaluation Price: ${{ total_real_estate_evaluation_price }}</p>
-            <p>Real Estate Profit/Loss <span style="color: {% if real_estate_profit_loss >= 0 %}green{% else %}red{% endif %};"> ${{ real_estate_profit_loss|floatformat:2 }} ({{ real_estate_profit_percentage|floatformat:2 }}%)</p>
-        
-            <hr>
-            <h5><strong>Total Investment Cost</strong></h5>
-            <p>${{ total_investment_cost|floatformat:2 }}</p>
-            
-            <hr>
-            <h5><strong>Total Profit/Loss</strong></h5>
-            <p><span style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ total_profit_loss|floatformat:2 }} ({{ total_profit_percentage|floatformat:2 }}%)</span>
-            </p>
-        </div>
-    </div>
-</div>
-
 <script>
     function fetchPrice(url, priceElementId, errorElementId) {
     fetch(url)
@@ -164,6 +195,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-
-
 {% endblock %}

@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+
 from .models import Stock, Bitcoin, Silver, RealEstate
 
 
@@ -9,7 +11,7 @@ class StockForm(forms.ModelForm):
 
     class Meta:
         model = Stock
-        fields = ['name', 'ticker', 'price', 'purchased_at']
+        fields = ['name', 'ticker', 'price', 'quantity', 'purchased_at']
 
     price = forms.DecimalField(label="Price ($)", max_digits=10, decimal_places=2)
 
@@ -57,3 +59,14 @@ class RealEstateForm(forms.ModelForm):
         model = RealEstate
         fields = ['property_name', 'purchase_price', 'purchase_date', 'current_evaluation_price']
 
+
+class CustomAuthenticationForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+    error_messages = {
+        'invalid_login': (
+            "Invalid username or password. Please try again."
+        ),
+        'inactive': ("This account is inactive."),
+    }

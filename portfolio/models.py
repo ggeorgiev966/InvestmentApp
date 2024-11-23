@@ -30,6 +30,7 @@ class Stock(models.Model):
     name = models.CharField(max_length=100)
     ticker = models.CharField(max_length=10)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     purchased_at = models.DateTimeField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 

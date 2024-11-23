@@ -2,9 +2,10 @@ from django.urls import reverse_lazy
 from django.views.generic import UpdateView
 from InvestmentApp import settings
 from .apis import get_silver_price, get_bitcoin_price, get_stock_price
-from .forms import StockForm, BitcoinForm, SilverForm, ContactForm, RealEstateForm
+from .forms import StockForm, BitcoinForm, SilverForm, ContactForm, RealEstateForm, CustomAuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.contrib.auth import views as auth_views
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.decorators import login_required
@@ -59,10 +60,28 @@ class PortfolioView(View):
         real_estate_profit_percentage = (real_estate_profit_loss / total_real_estate_purchase_price) * 100 if total_real_estate_purchase_price else 0.0
 
         # Calculate total investment cost
-        total_investment_cost = total_bitcoin_price + total_silver_price + total_spent_on_stocks + total_real_estate_purchase_price
+        total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
 
-        # Calculate total profit/loss
-        total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss
+        # Calculate stock totals and profit/loss
+        stock_data = {}
+        for stock in portfolio.stocks.all():
+            if stock.ticker not in stock_data:
+                stock_data[stock.ticker] = {'quantity': 0, 'total_price': 0, 'error': ""}
+            stock_data[stock.ticker]['quantity'] += float(stock.quantity)
+            stock_data[stock.ticker]['total_price'] += float(stock.quantity) * float(stock.price)
+
+        for ticker, data in stock_data.items():
+            data['avg_price'] = data['total_price'] / data['quantity'] if data['quantity'] else 0.0
+            current_price_data = get_stock_price(ticker)
+            data['current_price'] = current_price_data['current_stock_price'] if isinstance(
+                current_price_data['current_stock_price'], (int, float)) else 0.0
+            data['error'] = current_price_data['error']
+            data['profit_loss'] = (data['current_price'] - data['avg_price']) * data['quantity']
+            data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data[
+                'total_price'] else 0.0
+
+        total_stock_profit_loss = sum(data['profit_loss'] for data in stock_data.values())
+        total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss + total_stock_profit_loss
         total_profit_percentage = (total_profit_loss / total_investment_cost) * 100 if total_investment_cost else 0.0
 
         context = {
@@ -73,7 +92,6 @@ class PortfolioView(View):
             'total_silver_weight': total_silver_weight,
             'avg_silver_price': avg_silver_price,
             'total_silver_price': total_silver_price,
-            'total_spent_on_stocks': total_spent_on_stocks,
             'total_real_estate_purchase_price': total_real_estate_purchase_price,
             'total_real_estate_evaluation_price': total_real_estate_evaluation_price,
             'real_estate_profit_loss': real_estate_profit_loss,
@@ -88,6 +106,7 @@ class PortfolioView(View):
             'total_profit_loss': total_profit_loss,
             'total_profit_percentage': total_profit_percentage,
             'stocks': portfolio.stocks.all(),
+            'stock_data': stock_data,
             'bitcoins': portfolio.bitcoins.all(),
             'silvers': portfolio.silvers.all(),
             'realestates': RealEstate.objects.filter(user=request.user),
@@ -98,7 +117,7 @@ class PortfolioView(View):
         return render(request, 'portfolio/dashboard.html', context)
 
 
-
+@method_decorator(login_required, name='dispatch')
 class StockCreateView(LoginRequiredMixin, View):
     login_url = 'login'
 
@@ -110,7 +129,7 @@ class StockCreateView(LoginRequiredMixin, View):
         form = StockForm(request.POST)
         if form.is_valid():
             stock = form.save(commit=False)
-            stock.user = request.user  # Assign the authenticated User instance
+            stock.user = request.user
             stock.save()
             portfolio = InvestmentPortfolio.objects.get(user=request.user.userprofile)
             portfolio.stocks.add(stock)
@@ -266,15 +285,13 @@ def bitcoin_price_view(request):
 
 def silver_price_view(request):
     current_silver_price, message = get_silver_price()
-    if message:
-        return JsonResponse({'current_silver_price': current_silver_price, 'error': message})
-    return JsonResponse({'current_silver_price': current_silver_price})
-
+    return JsonResponse({
+        'current_silver_price': current_silver_price,
+        'error': message
+    })
 def stock_price_view(request, symbol):
     result = get_stock_price(symbol)
-    print(f"Fetched price for {symbol}: {result['current_stock_price']}, Message: {result['error']}")  # Debug print
     return JsonResponse(result)
-
 
 def contact(request):
     if request.method == 'POST':
@@ -305,6 +322,10 @@ def contact(request):
 
 def thank_you(request):
     return render(request, 'portfolio/thank_you.html')
+
+class CustomLoginView(auth_views.LoginView):
+    authentication_form = CustomAuthenticationForm
+    template_name = 'portfolio/login.html'
 
 
 

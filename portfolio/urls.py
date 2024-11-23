@@ -4,12 +4,12 @@ from . import views
 from .views import home, PortfolioView, StockCreateView, BitcoinCreateView, SilverCreateView, register, \
     bitcoin_price_view, StockUpdateView, BitcoinUpdateView, SilverUpdateView, DeleteBitcoinView, DeleteSilverView, \
     DeleteStockView, ConfirmDeleteView, silver_price_view, stock_price_view, RealEstateCreateView, RealEstateUpdateView, \
-    DeleteRealEstateView
+    DeleteRealEstateView, CustomLoginView
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', home, name='home'),
-    path('login/', auth_views.LoginView.as_view(template_name='portfolio/login.html'), name='login'),
+    path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
     path('contact/', views.contact, name='contact'),
     path('thank_you/', views.thank_you, name='thank_you'),
