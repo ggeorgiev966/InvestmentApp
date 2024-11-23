@@ -118,35 +118,35 @@
 
                 <hr>
                 <h5><strong>Silver</strong></h5>
-                        <p>Total Silver Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
-                        <p>Average Silver Price: ${{ avg_silver_price|floatformat:2 }}</p>
-                        <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
-                        <p>Silver Profit/Loss: <span class="profit-loss-text" style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                            ${{ silver_profit_loss|floatformat:2 }} ({{ silver_profit_percentage|floatformat:2 }}%)</span>
-                        </p>
+                <p>Total Silver Weight: {{ total_silver_weight|floatformat:2 }} oz</p>
+                <p>Average Silver Price: ${{ avg_silver_price|floatformat:2 }}</p>
+                <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
+                <p>Silver Profit/Loss: <span class="profit-loss-text" style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                    ${{ silver_profit_loss|floatformat:2 }} ({{ silver_profit_percentage|floatformat:2 }}%)</span>
+                </p>
 
-                        <hr>
-                        <h5><strong>Real Estate</strong></h5>
-                        <p>Total Spent on Real Estate: ${{ total_real_estate_purchase_price|floatformat:2 }}</p>
-                        <p>Total Real Estate Evaluation Price: ${{ total_real_estate_evaluation_price }}</p>
-                        <p>Real Estate Profit/Loss <span class="profit-loss-text" style="color: {% if real_estate_profit_loss >= 0 %}green{% else %}red{% endif %};"> ${{ real_estate_profit_loss|floatformat:2 }} ({{ real_estate_profit_percentage|floatformat:2 }}%)</p>
+                <hr>
+                <h5><strong>Real Estate</strong></h5>
+                <p>Total Spent on Real Estate: ${{ total_real_estate_purchase_price|floatformat:2 }}</p>
+                <p>Total Real Estate Evaluation Price: ${{ total_real_estate_evaluation_price }}</p>
+                <p>Real Estate Profit/Loss <span class="profit-loss-text" style="color: {% if real_estate_profit_loss >= 0 %}green{% else %}red{% endif %};"> ${{ real_estate_profit_loss|floatformat:2 }} ({{ real_estate_profit_percentage|floatformat:2 }}%)</p>
 
-                        <hr>
-                        <h5><strong>Total Investment Cost</strong></h5>
-                        <p>${{ total_investment_cost|floatformat:2 }}</p>
+                <hr>
+                <h5><strong>Total Investment Cost</strong></h5>
+                <p>${{ total_investment_cost|floatformat:2 }}</p>
 
-                        <hr>
-                        <h5><strong>Total Profit/Loss</strong></h5>
-                        <p><span class="profit-loss-text" style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                            ${{ total_profit_loss|floatformat:2 }} ({{ total_profit_percentage|floatformat:2 }}%)</span>
-                        </p>
-                    </div>
+                <hr>
+                <h5><strong>Total Profit/Loss</strong></h5>
+                <p><span class="profit-loss-text" style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
+                    ${{ total_profit_loss|floatformat:2 }} ({{ total_profit_percentage|floatformat:2 }}%)</span>
+                </p>
+            
                 </div>
             </div>
         </div>
     </div>
-
 </div>
+    
 <script>
     function fetchPrice(url, priceElementId, errorElementId) {
     fetch(url)
