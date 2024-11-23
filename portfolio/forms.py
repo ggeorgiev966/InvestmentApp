@@ -51,8 +51,9 @@ class RealEstateForm(forms.ModelForm):
     )
 
     purchase_price = forms.DecimalField(label="Price ($)", max_digits=10, decimal_places=2)
+    current_evaluation_price = forms.DecimalField(label="Current Evaluation Price ($)", max_digits=10, decimal_places=2)
 
     class Meta:
         model = RealEstate
-        fields = ['property_name', 'purchase_price', 'purchase_date']
+        fields = ['property_name', 'purchase_price', 'purchase_date', 'current_evaluation_price']
 

@@ -11,10 +11,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import InvestmentPortfolio, UserProfile, Silver, Stock, Bitcoin, RealEstate
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import EmailMessage
 from django.http import JsonResponse
 
-class PortfolioView(LoginRequiredMixin, View):
+@method_decorator(login_required, name='dispatch')
+class PortfolioView(View):
     login_url = 'login'
 
     def get(self, request):
@@ -31,7 +32,8 @@ class PortfolioView(LoginRequiredMixin, View):
         avg_silver_price = total_silver_price / total_silver_weight if total_silver_weight else 0.0
 
         total_spent_on_stocks = sum(float(stock.price) for stock in portfolio.stocks.all())
-        total_real_estate_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
+        total_real_estate_purchase_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
+        total_real_estate_evaluation_price = sum(float(realestate.current_evaluation_price) for realestate in RealEstate.objects.filter(user=request.user) if realestate.current_evaluation_price)
 
         # Get current Bitcoin and Silver prices
         current_bitcoin_price, bitcoin_price_message = get_bitcoin_price()
@@ -48,11 +50,20 @@ class PortfolioView(LoginRequiredMixin, View):
         bitcoin_profit_loss = (current_bitcoin_price - avg_bitcoin_price) * total_bitcoin_quantity
         silver_profit_loss = (current_silver_price - avg_silver_price) * total_silver_weight
 
+        # Calculate Bitcoin and Silver profit/loss percentage
+        bitcoin_profit_percentage = (bitcoin_profit_loss / total_bitcoin_price) * 100 if total_bitcoin_price else 0.0
+        silver_profit_percentage = (silver_profit_loss / total_silver_price) * 100 if total_silver_price else 0.0
+
+        # Calculate Real Estate profit/loss
+        real_estate_profit_loss = total_real_estate_evaluation_price - total_real_estate_purchase_price
+        real_estate_profit_percentage = (real_estate_profit_loss / total_real_estate_purchase_price) * 100 if total_real_estate_purchase_price else 0.0
+
         # Calculate total investment cost
-        total_investment_cost = total_bitcoin_price + total_silver_price + total_spent_on_stocks + total_real_estate_price
+        total_investment_cost = total_bitcoin_price + total_silver_price + total_spent_on_stocks + total_real_estate_purchase_price
 
         # Calculate total profit/loss
-        total_profit_loss = bitcoin_profit_loss + silver_profit_loss
+        total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss
+        total_profit_percentage = (total_profit_loss / total_investment_cost) * 100 if total_investment_cost else 0.0
 
         context = {
             'portfolio': portfolio,
@@ -63,13 +74,19 @@ class PortfolioView(LoginRequiredMixin, View):
             'avg_silver_price': avg_silver_price,
             'total_silver_price': total_silver_price,
             'total_spent_on_stocks': total_spent_on_stocks,
-            'total_real_estate_price': total_real_estate_price,
+            'total_real_estate_purchase_price': total_real_estate_purchase_price,
+            'total_real_estate_evaluation_price': total_real_estate_evaluation_price,
+            'real_estate_profit_loss': real_estate_profit_loss,
+            'real_estate_profit_percentage': real_estate_profit_percentage,
             'current_bitcoin_price': current_bitcoin_price,
             'current_silver_price': current_silver_price,
             'total_investment_cost': total_investment_cost,
             'bitcoin_profit_loss': bitcoin_profit_loss,
             'silver_profit_loss': silver_profit_loss,
+            'bitcoin_profit_percentage': bitcoin_profit_percentage,
+            'silver_profit_percentage': silver_profit_percentage,
             'total_profit_loss': total_profit_loss,
+            'total_profit_percentage': total_profit_percentage,
             'stocks': portfolio.stocks.all(),
             'bitcoins': portfolio.bitcoins.all(),
             'silvers': portfolio.silvers.all(),

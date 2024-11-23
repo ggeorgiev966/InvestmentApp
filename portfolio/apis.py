@@ -48,6 +48,7 @@ def get_bitcoin_price():
 
 ALPHA_VANTAGE_API_KEY = '84G9TTF1ZLAGSH0B'  # Replace with your actual API key
 
+
 def get_stock_price(symbol):
     global LAST_STOCK_PRICES
     try:
@@ -55,29 +56,41 @@ def get_stock_price(symbol):
         response = requests.get(url)
         data = response.json()
 
-
+        # Handle API limit reached
         if "Note" in data and "Thank you for using Alpha Vantage!" in data["Note"]:
             last_price = LAST_STOCK_PRICES.get(symbol)
             if last_price:
-                return {"current_stock_price": last_price, "error": "API limit reached. Displaying last available price."}
+                return {
+                    "current_stock_price": last_price,
+                    "error": "API limit reached. Displaying last available price."
+                }
             else:
-                return {"current_stock_price": None, "error": "No last available price."}
+                return {
+                    "current_stock_price": None,
+                    "error": "API limit reached. No last available price."
+                }
 
-
+        # Parse stock price
         last_refreshed = max(data['Time Series (Daily)'].keys())
         current_price = float(data['Time Series (Daily)'][last_refreshed]['4. close'])
 
-
+        # Cache the price for future use
         LAST_STOCK_PRICES[symbol] = current_price
-
         return {"current_stock_price": current_price, "error": None}
+
     except Exception as e:
         print(f"Error fetching stock price for {symbol}: {e}")
 
-
+        # Fallback to last available price in case of an error
         last_price = LAST_STOCK_PRICES.get(symbol)
         if last_price:
-            return {"current_stock_price": last_price, "error": "Error fetching stock price. Displaying last available price."}
+            return {
+                "current_stock_price": last_price,
+                "error": "Error fetching stock price. Displaying last available price."
+            }
         else:
-            return {"current_stock_price": None, "error": "Error fetching stock price. No data available."}
+            return {
+                "current_stock_price": None,
+                "error": "Error fetching stock price. API limit reached. No data available."
+            }
 

@@ -6,7 +6,7 @@
     <div class="card-header">Stocks</div>
     <div class="card-body">
         {% for stock in stocks %}
-            <p>{{ stock.name }} ({{ stock.ticker }}): Purchased Price: ${{ stock.price|floatformat:2 }} - Current Price: $<span id="current-stock-price-{{ stock.ticker }}">Loading...</span> - Purchased at: {{ stock.purchased_at }}</p>
+            <p>{{ stock.name }} ({{ stock.ticker }}): Purchase Price: ${{ stock.price|floatformat:2 }} - Current Price: $<span id="current-stock-price-{{ stock.ticker }}">Loading...</span> - Purchased at: {{ stock.purchased_at }}</p>
             <p id="stock-error-{{ stock.ticker }}" style="color: red;"></p>
             <a href="{% url 'edit_stock' stock.id %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'confirm_delete' 'stock' stock.id %}" class="btn btn-danger">Delete</a>
@@ -25,7 +25,7 @@
         <p>Current Price: $<span id="bitcoin-price">Loading...</span></p>
         <p id="bitcoin-error" style="color: red;"></p>
         {% for btc in bitcoins %}
-            <p>Quantity: {{ btc.quantity|floatformat:2 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
+            <p>Quantity: {{ btc.quantity|floatformat:5 }} - Purchase Price: ${{ btc.price|floatformat:2 }} - Purchased at: {{ btc.purchased_at }}</p>
             <a href="{% url 'edit_bitcoin' btc.id %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'confirm_delete' 'bitcoin' btc.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
@@ -59,7 +59,7 @@
     <div class="card-header">Real Estate</div>
     <div class="card-body">
         {% for realestate in realestates %}
-            <p>{{ realestate.property_name }}: Purchase Price: ${{ realestate.purchase_price|floatformat:2 }} - Purchased at: {{ realestate.purchase_date }}</p>
+            <p>{{ realestate.property_name }}: Purchase Price: ${{ realestate.purchase_price|floatformat:2 }} - Current evaluation price: ${{ realestate.current_evaluation_price|floatformat:2 }} - Purchased at: {{ realestate.purchase_date }}</p>
             <a href="{% url 'edit_realestate' realestate.id %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'confirm_delete' 'realestate' realestate.id %}" class="btn btn-danger">Delete</a>
         {% empty %}
@@ -71,8 +71,8 @@
     </div>
 </div>
 
-<div class="summary" style="position: absolute; bottom: 20px; right: 20px;">
-    <div class="card mt-3">
+<div class="summary" style="position: absolute; bottom: -110px; right: 20px;">
+    <div class="investment-summary">
         <div class="card-header">Investment Summary</div>
         <div class="card-body">
             <hr>
@@ -81,11 +81,11 @@
             
             <hr>
             <h5>Bitcoin</h5>
-            <p>Total Quantity: {{ total_bitcoin_quantity|floatformat:2 }} btc</p>
+            <p>Total Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
             <p>Average Purchase Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
             <p>Total Bitcoin Price: ${{ total_bitcoin_price|floatformat:2 }}</p>
             <p>Profit/Loss: <span style="color: {% if bitcoin_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ bitcoin_profit_loss|floatformat:2 }}</span>
+                ${{ bitcoin_profit_loss|floatformat:2 }} ({{ bitcoin_profit_percentage|floatformat:2 }}%)</span>
             </p>
             
             <hr>
@@ -94,13 +94,15 @@
             <p>Average Purchase Price: ${{ avg_silver_price|floatformat:2 }}</p>
             <p>Total Silver Price: ${{ total_silver_price|floatformat:2 }}</p>
             <p>Profit/Loss: <span style="color: {% if silver_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ silver_profit_loss|floatformat:2 }}</span>
+                ${{ silver_profit_loss|floatformat:2 }} ({{ silver_profit_percentage|floatformat:2 }}%)</span>
             </p>
             
             <hr>
             <h5>Real Estate</h5>
-            <p>Total Spent on Real Estate: ${{ total_real_estate_price|floatformat:2 }}</p>
-            
+            <p>Total Spent on Real Estate: ${{ total_real_estate_purchase_price|floatformat:2 }}</p>
+            <p>Total Real Estate Evaluation Price: ${{ total_real_estate_evaluation_price }}</p>
+            <p>Real Estate Profit/Loss <span style="color: {% if real_estate_profit_loss >= 0 %}green{% else %}red{% endif %};"> ${{ real_estate_profit_loss|floatformat:2 }} ({{ real_estate_profit_percentage|floatformat:2 }}%)</p>
+        
             <hr>
             <h5><strong>Total Investment Cost</strong></h5>
             <p>${{ total_investment_cost|floatformat:2 }}</p>
@@ -108,7 +110,7 @@
             <hr>
             <h5><strong>Total Profit/Loss</strong></h5>
             <p><span style="color: {% if total_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                ${{ total_profit_loss|floatformat:2 }}</span>
+                ${{ total_profit_loss|floatformat:2 }} ({{ total_profit_percentage|floatformat:2 }}%)</span>
             </p>
         </div>
     </div>
@@ -116,55 +118,51 @@
 
 <script>
     function fetchPrice(url, priceElementId, errorElementId) {
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log(`Data from ${url}:`, data);  // Debug print to verify data
-                const priceElement = document.getElementById(priceElementId);
-                const errorElement = document.getElementById(errorElementId);
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log(`Data from ${url}:`, data);  // Debug print to verify data
+            const priceElement = document.getElementById(priceElementId);
+            const errorElement = document.getElementById(errorElementId);
 
-                if (data.current_bitcoin_price !== undefined) {
-                    const price = parseFloat(data.current_bitcoin_price.replace(/,/g, ''));  // Remove commas and convert to float
-                    priceElement.innerText = price.toFixed(2);
-                    errorElement.innerText = "";
-                } else if (data.current_silver_price !== undefined) {
-                    const price = parseFloat(data.current_silver_price.replace(/,/g, ''));  // Remove commas and convert to float
-                    priceElement.innerText = price.toFixed(2);
-                    errorElement.innerText = "";
-                } else if (data.current_stock_price !== undefined) {
+            // Handling Stock Price
+            if (data.current_stock_price !== undefined) {
+                if (data.current_stock_price !== null) {
+                    // Valid stock price
                     const price = parseFloat(data.current_stock_price);  
-                    if (!isNaN(price)) {
-                        priceElement.innerText = price.toFixed(2);
-                        errorElement.innerText = "";
-                    } else {
-                        priceElement.innerText = "Error";
-                        errorElement.innerText = "Unrecognized ticker.";
-                    }
+                    priceElement.innerText = price.toFixed(2);
+                    errorElement.innerText = data.error ? data.error : "";  // Display API-related error if available
                 } else {
+                    // No price available
                     priceElement.innerText = "Error";
-                    if (data.error) {
-                        errorElement.innerText = data.error;
-                    } else {
-                        errorElement.innerText = "Unrecognized ticker.";
-                    }
+                    errorElement.innerText = data.error || "Error fetching stock price.";
                 }
-            })
-            .catch(error => {
-                console.error(`Error fetching data from ${url}:`, error);
-                document.getElementById(priceElementId).innerText = "Error";
-                document.getElementById(errorElementId).innerText = "Error fetching data.";
-            });
-    }
+            }
+            // Handling Bitcoin or Silver Prices (if applicable)
+            else if (data.current_bitcoin_price !== undefined || data.current_silver_price !== undefined) {
+                const priceKey = data.current_bitcoin_price !== undefined ? 'current_bitcoin_price' : 'current_silver_price';
+                const price = parseFloat(data[priceKey].replace(/,/g, ''));  // Remove commas and convert to float
+                priceElement.innerText = price.toFixed(2);
+                errorElement.innerText = data.error || "";
+            }
+        })
+        .catch(error => {
+            console.error(`Error fetching data from ${url}:`, error);
+            document.getElementById(priceElementId).innerText = "Error";
+            document.getElementById(errorElementId).innerText = "Error fetching data. API limit reached.";
+        });
+}
 
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error');
-        fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error');
-        {% for stock in stocks %}
-            fetchPrice(`/api/stock-price/{{ stock.ticker }}/`, `current-stock-price-{{ stock.ticker }}`, `stock-error-{{ stock.ticker }}`);
-        {% endfor %}
-        setInterval(() => fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error'), 60000);  // Refresh every 1 minute
-        setInterval(() => fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error'), 60000);  // Refresh every 1 minute
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error');
+    fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error');
+    {% for stock in stocks %}
+        fetchPrice(`/api/stock-price/{{ stock.ticker }}/`, `current-stock-price-{{ stock.ticker }}`, `stock-error-{{ stock.ticker }}`);
+    {% endfor %}
+    setInterval(() => fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error'), 60000);  // Refresh every 1 minute
+    setInterval(() => fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error'), 60000);  // Refresh every 1 minute
+});
+
 </script>
 
 

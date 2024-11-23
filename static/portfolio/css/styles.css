@@ -25,6 +25,15 @@ body, html {
     margin-bottom: 2rem;
 }
 
+
+nav {
+    z-index: 1000;
+}
+
+.summary {
+    position: absolute;
+}
+
 .button-group {
     margin: 1rem 0;
 }
