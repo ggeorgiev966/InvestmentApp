@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -140,7 +140,8 @@ LOGOUT_REDIRECT_URL = 'home'
 
 COINDESK_API_URL = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
 
-from .email_config import EMAIL_USER, EMAIL_PASSWORD
+EMAIL_USER = os.getenv('EMAIL_USER')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.abv.bg'
