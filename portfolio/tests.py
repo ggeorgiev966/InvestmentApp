@@ -14,6 +14,7 @@ class RealEstateModelTest(TestCase):
         self.realestate = RealEstate.objects.create(
             property_name="Test Property",
             purchase_price=100000.00,
+            current_evaluation_price=120000.00,
             purchase_date=make_aware(datetime.now()),
             user=user
         )
@@ -21,13 +22,16 @@ class RealEstateModelTest(TestCase):
     def test_realestate_creation(self):
         self.assertEqual(self.realestate.property_name, "Test Property")
         self.assertEqual(self.realestate.purchase_price, 100000.00)
+        self.assertEqual(self.realestate.current_evaluation_price, 120000.00)
         self.assertEqual(str(self.realestate), "Test Property")
+
 
 class RealEstateFormTest(TestCase):
     def test_realestate_form_valid(self):
         form_data = {
             'property_name': 'Test Property',
             'purchase_price': 100000.00,
+            'current_evaluation_price': 120000.00,
             'purchase_date': now(),
         }
         form = RealEstateForm(data=form_data)
@@ -37,11 +41,12 @@ class RealEstateFormTest(TestCase):
         form_data = {
             'property_name': '',
             'purchase_price': '',
+            'current_evaluation_price': '',
             'purchase_date': '',
         }
         form = RealEstateForm(data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(len(form.errors), 3)
+        self.assertEqual(len(form.errors), 4)
 
 class RealEstateViewTest(TestCase):
     def setUp(self):
@@ -54,27 +59,33 @@ class RealEstateViewTest(TestCase):
         response = self.client.post(reverse('add_realestate'), {
             'property_name': 'Test Property',
             'purchase_price': 100000.00,
+            'current_evaluation_price': 120000.00,  # Include this field
             'purchase_date': '2023-11-20T12:00:00Z',
         })
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)  # Redirect after success
         self.assertEqual(RealEstate.objects.count(), 1)
+        realestate = RealEstate.objects.first()
+        self.assertEqual(realestate.current_evaluation_price, 120000.00)
 
     def test_realestate_update_view(self):
         realestate = RealEstate.objects.create(
             property_name="Test Property",
             purchase_price=100000.00,
+            current_evaluation_price=120000.00,
             purchase_date=make_aware(datetime.now()),
             user=self.user
         )
         response = self.client.post(reverse('edit_realestate', args=[realestate.id]), {
             'property_name': 'Updated Property',
             'purchase_price': 120000.00,
+            'current_evaluation_price': 150000.00,
             'purchase_date': '2023-11-20T12:00:00Z',
         })
         self.assertEqual(response.status_code, 302)
         realestate.refresh_from_db()
         self.assertEqual(realestate.property_name, 'Updated Property')
-        self.assertEqual(realestate.purchase_price, 120000.00)
+        self.assertEqual(realestate.current_evaluation_price, 150000.00)
+
     def test_realestate_delete_view(self):
         realestate = RealEstate.objects.create(
             property_name="Test Property",
@@ -120,6 +131,7 @@ class StockViewTest(TestCase):
             'name': 'Test Stock',
             'ticker': 'TST',
             'price': 500.00,
+            'quantity': 2,
             'purchased_at': make_aware(datetime.now()),
         })
         self.assertEqual(response.status_code, 302)
@@ -130,6 +142,7 @@ class StockViewTest(TestCase):
             name="Test Stock",
             ticker="TST",
             price=500.00,
+            quantity=2,
             purchased_at=make_aware(datetime.now()),
             user=self.user
         )
@@ -141,6 +154,7 @@ class StockViewTest(TestCase):
             'name': 'Updated Stock',
             'ticker': 'UST',
             'price': 600.00,
+            'quantity': 2,
             'purchased_at': make_aware(datetime.now()),
         })
         self.assertEqual(response.status_code, 302)
@@ -148,6 +162,7 @@ class StockViewTest(TestCase):
         self.assertEqual(stock.name, 'Updated Stock')
         self.assertEqual(stock.ticker, 'UST')
         self.assertEqual(stock.price, 600.00)
+        self.assertEqual(stock.quantity, 2)
 
     def test_stock_delete_view(self):
         stock = Stock.objects.create(
