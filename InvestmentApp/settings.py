@@ -23,10 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-lv3j3v18!jr9=91xu+v2uui*dv08-%%^v-(soe84gqt-8dbmx6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['web-production-db11.up.railway.app', 'InvestmentApp.up.railway.app','www.InvestmentApp.up.railway.app', 'localhost', '127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-db11.up.railway.app',
+    'https://InvestmentApp.up.railway.app',
+    'https://www.InvestmentApp.up.railway.app',
+    'https://*.railway.app',
+]
 
 # Application definition
 
@@ -152,6 +158,3 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 
 DEFAULT_FROM_EMAIL = EMAIL_USER
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://investmentapp-39d2ef391ade.up.railway.app',
-]
