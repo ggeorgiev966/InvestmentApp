@@ -1,4 +1,4 @@
-import requests
+import requests, redis
 from django.http import JsonResponse
 
 LAST_SILVER_PRICE = None

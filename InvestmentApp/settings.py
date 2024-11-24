@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-lv3j3v18!jr9=91xu+v2uui*dv08-%%^v-(soe84gqt-8dbmx6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['InvestmentApp.herokuapp.com']
 
 
 # Application definition
@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'InvestmentApp.urls'
@@ -125,7 +126,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -149,4 +151,5 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 
 DEFAULT_FROM_EMAIL = EMAIL_USER
 
-
+import django_heroku
+django_heroku.settings(locals())

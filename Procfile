@@ -1,0 +1,1 @@
+web: gunicorn InvestmentApp.wsgi --log-file -
