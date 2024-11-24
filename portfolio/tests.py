@@ -41,7 +41,7 @@ class RealEstateFormTest(TestCase):
         }
         form = RealEstateForm(data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(len(form.errors), 3)  # All fields are required
+        self.assertEqual(len(form.errors), 3)
 
 class RealEstateViewTest(TestCase):
     def setUp(self):
@@ -122,7 +122,7 @@ class StockViewTest(TestCase):
             'price': 500.00,
             'purchased_at': make_aware(datetime.now()),
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Stock.objects.count(), 1)
 
     def test_stock_update_view(self):
@@ -143,7 +143,7 @@ class StockViewTest(TestCase):
             'price': 600.00,
             'purchased_at': make_aware(datetime.now()),
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        self.assertEqual(response.status_code, 302)
         stock.refresh_from_db()
         self.assertEqual(stock.name, 'Updated Stock')
         self.assertEqual(stock.ticker, 'UST')
@@ -158,7 +158,7 @@ class StockViewTest(TestCase):
             user=self.user
         )
         response = self.client.post(reverse('delete_stock', args=[stock.id]))
-        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Stock.objects.count(), 0)
 
 # Bitcoin Tests
@@ -209,7 +209,7 @@ class BitcoinViewTest(TestCase):
             'price': 65000.00,
             'purchased_at': make_aware(datetime.now()),
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        self.assertEqual(response.status_code, 302)
         bitcoin.refresh_from_db()
         self.assertEqual(bitcoin.quantity, 2.0)
         self.assertEqual(bitcoin.price, 65000.00)
@@ -222,7 +222,7 @@ class BitcoinViewTest(TestCase):
             user=self.user
         )
         response = self.client.post(reverse('delete_bitcoin', args=[bitcoin.id]))
-        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Bitcoin.objects.count(), 0)
 
     # Silver Tests
@@ -258,7 +258,7 @@ class SilverViewTest(TestCase):
             'price': 1000.00,
             'purchased_at': make_aware(datetime.now()),
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Silver.objects.count(), 1)
 
     def test_silver_update_view(self):
@@ -277,7 +277,7 @@ class SilverViewTest(TestCase):
             'price': 1100.00,
             'purchased_at': make_aware(datetime.now()),
         })
-        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+        self.assertEqual(response.status_code, 302)
         silver.refresh_from_db()
         self.assertEqual(silver.weight, 60.0)
         self.assertEqual(silver.price, 1100.00)
@@ -290,6 +290,6 @@ class SilverViewTest(TestCase):
             user=self.user
         )
         response = self.client.post(reverse('delete_silver', args=[silver.id]))
-        self.assertEqual(response.status_code, 302)  # Redirect after successful delete
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Silver.objects.count(), 0)
 

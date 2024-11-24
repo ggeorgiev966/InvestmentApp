@@ -48,7 +48,7 @@ def get_bitcoin_price():
         return LAST_BITCOIN_PRICE, "Error fetching Bitcoin price. Displaying last available price"
 
 
-ALPHA_VANTAGE_API_KEY = '84G9TTF1ZLAGSH0B'  # Replace with your actual API key
+ALPHA_VANTAGE_API_KEY = '84G9TTF1ZLAGSH0B'
 
 def get_stock_price(symbol):
     global LAST_STOCK_PRICES
@@ -57,7 +57,7 @@ def get_stock_price(symbol):
         response = requests.get(url)
         data = response.json()
 
-        # Check if the API limit has been reached
+
         if "Note" in data and "Thank you for using Alpha Vantage!" in data["Note"]:
             last_price = LAST_STOCK_PRICES.get(symbol)
             if last_price:
@@ -65,22 +65,22 @@ def get_stock_price(symbol):
             else:
                 return {"current_stock_price": 0.0, "error": "API limit reached. No last available price."}
 
-        # Handle unrecognized ticker
+
         if "Error Message" in data:
             return {"current_stock_price": 0.0, "error": "Unrecognized ticker."}
 
-        # Parse the most recent price
+
         last_refreshed = max(data['Time Series (Daily)'].keys())
         current_price = float(data['Time Series (Daily)'][last_refreshed]['4. close'])
 
-        # Update the last available price
+
         LAST_STOCK_PRICES[symbol] = current_price
 
         return {"current_stock_price": current_price, "error": None}
     except Exception as e:
         print(f"Error fetching stock price for {symbol}: {e}")
 
-        # Fallback to the last available price if available
+
         last_price = LAST_STOCK_PRICES.get(symbol)
         if last_price:
             return {"current_stock_price": float(last_price), "error": "Error fetching stock price. Displaying last available price."}

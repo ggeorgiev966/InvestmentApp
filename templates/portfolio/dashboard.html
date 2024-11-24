@@ -167,33 +167,33 @@
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    console.log(`Data from ${url}:`, data);  // Debug print to verify data
+                    console.log(`Data from ${url}:`, data);  
                     const priceElement = document.getElementById(priceElementId);
                     const errorElement = document.getElementById(errorElementId);
 
-                    // Handling Stock Price
+                    
                     if (data.current_stock_price !== undefined) {
                         const price = parseFloat(data.current_stock_price);
                         if (!isNaN(price) && price !== 0.0) {
-                            // Valid stock price
+                            
                             priceElement.innerText = price.toFixed(2);
-                            errorElement.innerText = data.error ? data.error : "";  // Display API-related error if available
+                            errorElement.innerText = data.error ? data.error : "";  
                         } else {
-                            // No valid price available
+                            
                             priceElement.innerText = "0.00";
                             errorElement.innerText = data.error || "Error fetching stock price.";
                         }
                     }
-                    // Handling Bitcoin or Silver Prices (if applicable)
+                    
                     else if (data.current_bitcoin_price !== undefined || data.current_silver_price !== undefined) {
                         const priceKey = data.current_bitcoin_price !== undefined ? 'current_bitcoin_price' : 'current_silver_price';
                         const price = parseFloat(data[priceKey].replace(/,/g, ''));
                         if (!isNaN(price) && price !== 0.0) {
-                            // Valid price
+                            
                             priceElement.innerText = price.toFixed(2);
-                            errorElement.innerText = data.error ? data.error : "";  // Display API-related error if available
+                            errorElement.innerText = data.error ? data.error : "";  
                         } else {
-                            // No valid price available
+                            
                             priceElement.innerText = "0.00";
                             errorElement.innerText = data.error || `Error fetching ${priceKey.replace('current_', '').replace('_price', '')} price.`;
                         }
