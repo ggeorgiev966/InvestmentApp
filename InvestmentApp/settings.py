@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-lv3j3v18!jr9=91xu+v2uui*dv08-%%^v-(soe84gqt-8dbmx6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['InvestmentApp.herokuapp.com']
+ALLOWED_HOSTS = ['InvestmentApp.up.railway.app','www.InvestmentApp.up.railway.app']
 
 
 # Application definition
@@ -152,5 +152,6 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 
 DEFAULT_FROM_EMAIL = EMAIL_USER
 
-import django_heroku
-django_heroku.settings(locals())
+CSRF_TRUSTED_ORIGINS = [
+    'https://investmentapp-39d2ef391ade.up.railway.app',
+]
