@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .apis import last_stock_prices_view
 from .views import home, PortfolioView, StockCreateView, BitcoinCreateView, SilverCreateView, register, \
     bitcoin_price_view, StockUpdateView, BitcoinUpdateView, SilverUpdateView, DeleteBitcoinView, DeleteSilverView, \
     DeleteStockView, ConfirmDeleteView, silver_price_view, stock_price_view, RealEstateCreateView, RealEstateUpdateView, \
@@ -31,5 +32,6 @@ urlpatterns = [
     path('delete_silver/<int:pk>/', DeleteSilverView.as_view(), name='delete_silver'),
     path('delete_realestate/<int:pk>/', DeleteRealEstateView.as_view(), name='delete_realestate'),
     path('confirm_delete/<str:model_name>/<int:pk>/', ConfirmDeleteView.as_view(), name='confirm_delete'),
+    path('api/last-stock-prices/', last_stock_prices_view, name='last_stock_prices_view'),
 ]
 

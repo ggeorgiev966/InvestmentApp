@@ -1,4 +1,5 @@
 import requests
+from django.http import JsonResponse
 
 LAST_SILVER_PRICE = None
 LAST_BITCOIN_PRICE = None
@@ -86,3 +87,6 @@ def get_stock_price(symbol):
         else:
             return {"current_stock_price": 0.0, "error": "Error fetching stock price. API limit reached."}
 
+
+def last_stock_prices_view(request):
+    return JsonResponse(LAST_STOCK_PRICES)

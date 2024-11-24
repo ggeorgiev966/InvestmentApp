@@ -32,7 +32,7 @@
                 <div class="card mt-3">
                     <div class="card-header">Bitcoin</div>
                     <div class="card-body">
-                        <p>Current Price: $<span id="bitcoin-price">Loading...</span></p>
+                        <p>Current Price: $<span id="bitcoin-price"></span></p>
                         <p id="bitcoin-error" style="color: red;"></p>
                         {% for btc in bitcoins %}
                             <p>Quantity: {{ btc.quantity|floatformat:5 }} - Purchase Price:
@@ -106,7 +106,7 @@
                                         <li>Current Price: ${{ data.current_price|floatformat:2 }}</li>
                                         <li>Profit/Loss: <span class="profit-loss-text"
                                                                style="color: {% if data.profit_loss >= 0 %}green{% else %}red{% endif %};">
-                                ${{ data.profit_loss|floatformat:2 }} {{ data.profit_percentage|floatformat:2 }}%</span>
+                                ${{ data.profit_loss|floatformat:2 }} ({{ data.profit_percentage|floatformat:2 }}%)</span>
                                         </li>
                                     </ul>
                                     <hr>
@@ -114,11 +114,10 @@
                                 <p>Total Spent on Stocks: ${{ total_spent_on_stocks|floatformat:2 }}</p>
                                 <p>Total Stock Profit/Loss: <span class="profit-loss-text"
                                                                   style="color: {% if total_stock_profit_loss >= 0 %}green{% else %}red{% endif %};">
-                        ${{ total_stock_profit_loss|floatformat:2 }}
+                        ${{ total_stock_profit_loss|floatformat:2 }} ({{ total_stock_profit_percentage|floatformat:2 }}%)
                     </span></p>
                             </div>
 
-                            <hr>
                             <h5><strong>Bitcoin</strong></h5>
                             <p>Total Bitcoin Quantity: {{ total_bitcoin_quantity|floatformat:5 }} btc</p>
                             <p>Average Bitcoin Price: ${{ avg_bitcoin_price|floatformat:2 }}</p>
@@ -188,7 +187,7 @@
                     // Handling Bitcoin or Silver Prices (if applicable)
                     else if (data.current_bitcoin_price !== undefined || data.current_silver_price !== undefined) {
                         const priceKey = data.current_bitcoin_price !== undefined ? 'current_bitcoin_price' : 'current_silver_price';
-                        const price = parseFloat(data[priceKey]);
+                        const price = parseFloat(data[priceKey].replace(/,/g, ''));
                         if (!isNaN(price) && price !== 0.0) {
                             // Valid price
                             priceElement.innerText = price.toFixed(2);

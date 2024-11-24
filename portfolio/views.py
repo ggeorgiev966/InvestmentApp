@@ -79,6 +79,9 @@ class PortfolioView(View):
             data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data['total_price'] else 0.0
             total_stock_profit_loss += data['profit_loss']
 
+        # Calculate total stock profit/loss percentage
+        total_stock_profit_percentage = (total_stock_profit_loss / total_spent_on_stocks) * 100 if total_spent_on_stocks else 0.0
+
         # Calculate total investment cost
         total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
 
@@ -107,6 +110,7 @@ class PortfolioView(View):
             'silver_profit_percentage': silver_profit_percentage,
             'total_spent_on_stocks': total_spent_on_stocks,
             'total_stock_profit_loss': total_stock_profit_loss,
+            'total_stock_profit_percentage': total_stock_profit_percentage,
             'total_profit_loss': total_profit_loss,
             'total_profit_percentage': total_profit_percentage,
             'stocks': portfolio.stocks.all(),
