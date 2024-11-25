@@ -187,7 +187,7 @@
                         } else {
 
                             priceElement.innerText = "0.00";
-                            errorElement.innerText = `Error fetching ${priceKey.replace('current_', '').replace('_price', '').replace('_', ' ')} price.`;
+                            errorElement.innerText = `Error fetching ${priceKey.replace('current_', '').replace('_price', '').replace('_', ' ')} price. API limit reached.`;
                         }
                     })
                     .catch(error => {
