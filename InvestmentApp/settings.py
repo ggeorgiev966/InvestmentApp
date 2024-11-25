@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from InvestmentApp import email_config
+from InvestmentApp.email_config import EMAIL_USER
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,16 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-lv3j3v18!jr9=91xu+v2uui*dv08-%%^v-(soe84gqt-8dbmx6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['web-production-db11.up.railway.app', 'InvestmentApp.up.railway.app','www.InvestmentApp.up.railway.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = []
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-db11.up.railway.app',
-    'https://InvestmentApp.up.railway.app',
-    'https://www.InvestmentApp.up.railway.app',
-    'https://*.railway.app',
-]
+
 
 # Application definition
 
@@ -54,7 +52,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'InvestmentApp.urls'
@@ -132,8 +129,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -146,8 +141,9 @@ LOGOUT_REDIRECT_URL = 'home'
 
 COINDESK_API_URL = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
 
-EMAIL_USER = os.getenv('EMAIL_USER')
-EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+
+EMAIL_USER = email_config.EMAIL_USER
+EMAIL_PASSWORD = email_config.EMAIL_PASSWORD
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.abv.bg'

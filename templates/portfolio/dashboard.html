@@ -32,7 +32,7 @@
                 <div class="card mt-3">
                     <div class="card-header">Bitcoin</div>
                     <div class="card-body">
-                        <p>Current Price: $<span id="bitcoin-price"></span></p>
+                        <p>Current Price: $<span id="bitcoin-price">{{ current_bitcoin_price|floatformat:8 }}</span></p>
                         <p id="bitcoin-error" style="color: red;"></p>
                         {% for btc in bitcoins %}
                             <p>Quantity: {{ btc.quantity|floatformat:5 }} - Purchase Price:
@@ -47,8 +47,8 @@
                         </div>
                     </div>
                 </div>
-
-
+            
+            
                 <div class="card mt-3">
                     <div class="card-header">Silver</div>
                     <div class="card-body">
@@ -163,61 +163,82 @@
     </div>
 
     <script>
-        function fetchPrice(url, priceElementId, errorElementId) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    console.log(`Data from ${url}:`, data);  
-                    const priceElement = document.getElementById(priceElementId);
-                    const errorElement = document.getElementById(errorElementId);
-
-                    
-                    if (data.current_stock_price !== undefined) {
-                        const price = parseFloat(data.current_stock_price);
-                        if (!isNaN(price) && price !== 0.0) {
-                            
-                            priceElement.innerText = price.toFixed(2);
-                            errorElement.innerText = data.error ? data.error : "";  
-                        } else {
-                            
-                            priceElement.innerText = "0.00";
-                            errorElement.innerText = data.error || "Error fetching stock price.";
-                        }
-                    }
-                    
-                    else if (data.current_bitcoin_price !== undefined || data.current_silver_price !== undefined) {
-                        const priceKey = data.current_bitcoin_price !== undefined ? 'current_bitcoin_price' : 'current_silver_price';
-                        const price = parseFloat(data[priceKey].replace(/,/g, ''));
-                        if (!isNaN(price) && price !== 0.0) {
-                            
-                            priceElement.innerText = price.toFixed(2);
-                            errorElement.innerText = data.error ? data.error : "";  
-                        } else {
-                            
-                            priceElement.innerText = "0.00";
-                            errorElement.innerText = data.error || `Error fetching ${priceKey.replace('current_', '').replace('_price', '')} price.`;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error(`Error fetching data from ${url}:`, error);
-                    const priceElement = document.getElementById(priceElementId);
-                    const errorElement = document.getElementById(errorElementId);
-                    priceElement.innerText = "0.00";
-                    errorElement.innerText = "Error fetching data. API limit reached.";
-                });
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
-            fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error');
-            fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error');
+
+            function updatePriceWithValidation(url, priceElementId, errorElementId, priceKey) {
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`Data from ${url}:`, data);
+
+                        const priceElement = document.getElementById(priceElementId);
+                        const errorElement = document.getElementById(errorElementId);
+
+                        if (!priceElement || !errorElement) {
+                            console.error(`Missing elements: ${priceElementId} or ${errorElementId}`);
+                            return;
+                        }
+
+                        const price = parseFloat(data[priceKey]);
+                        if (!isNaN(price) && price !== 0.0) {
+
+                            priceElement.innerText = price.toFixed(2);
+                            errorElement.innerText = "";  // Clear any previous error
+                        } else {
+
+                            priceElement.innerText = "0.00";
+                            errorElement.innerText = `Error fetching ${priceKey.replace('current_', '').replace('_price', '').replace('_', ' ')} price.`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching data from ${url}:`, error);
+                        const priceElement = document.getElementById(priceElementId);
+                        const errorElement = document.getElementById(errorElementId);
+
+                        if (priceElement && errorElement) {
+                            priceElement.innerText = "0.00";
+                            errorElement.innerText = "Error fetching data.";
+                        }
+                    });
+            }
+
+
+            const priceEndpoints = [
+                {
+                    url: "{% url 'bitcoin_price_view' %}",
+                    priceElementId: 'bitcoin-price',
+                    errorElementId: 'bitcoin-error',
+                    priceKey: 'current_bitcoin_price'
+                },
+                {
+                    url: "{% url 'silver_price_view' %}",
+                    priceElementId: 'silver-price',
+                    errorElementId: 'silver-error',
+                    priceKey: 'current_silver_price'
+                }
+            ];
+
+
             {% for stock in stocks %}
-                fetchPrice(`/api/stock-price/{{ stock.ticker }}/`, `current-stock-price-{{ stock.ticker }}`, `stock-error-{{ stock.ticker }}`);
+                priceEndpoints.push({
+                    url: `/api/stock-price/{{ stock.ticker }}/`,
+                    priceElementId: `current-stock-price-{{ stock.ticker }}`,
+                    errorElementId: `stock-error-{{ stock.ticker }}`,
+                    priceKey: 'current_stock_price'
+                });
             {% endfor %}
-            setInterval(() => fetchPrice("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error'), 60000);  // Refresh every 1 minute
-            setInterval(() => fetchPrice("{% url 'silver_price_view' %}", 'silver-price', 'silver-error'), 60000);  // Refresh every 1 minute
+
+
+            priceEndpoints.forEach(endpoint => {
+                updatePriceWithValidation(endpoint.url, endpoint.priceElementId, endpoint.errorElementId, endpoint.priceKey);
+            });
+
+
+            setInterval(() => updatePriceWithValidation("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error', 'current_bitcoin_price'), 60000);
+            setInterval(() => updatePriceWithValidation("{% url 'silver_price_view' %}", 'silver-price', 'silver-error', 'current_silver_price'), 60000);
         });
     </script>
+
 
 
 {% endblock %}

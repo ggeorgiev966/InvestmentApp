@@ -23,7 +23,7 @@ class PortfolioView(View):
         user_profile, created = UserProfile.objects.get_or_create(user=request.user)
         portfolio, created = InvestmentPortfolio.objects.get_or_create(user=user_profile)
 
-
+        # Calculate totals and averages
         total_bitcoin_quantity = sum(float(bitcoin.quantity) for bitcoin in portfolio.bitcoins.all())
         total_bitcoin_price = sum(float(bitcoin.quantity) * float(bitcoin.price) for bitcoin in portfolio.bitcoins.all())
         avg_bitcoin_price = total_bitcoin_price / total_bitcoin_quantity if total_bitcoin_quantity else 0.0
@@ -36,30 +36,28 @@ class PortfolioView(View):
         total_real_estate_purchase_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
         total_real_estate_evaluation_price = sum(float(realestate.current_evaluation_price) for realestate in RealEstate.objects.filter(user=request.user) if realestate.current_evaluation_price)
 
-
+        # Get current Bitcoin and Silver prices
         current_bitcoin_price, bitcoin_price_message = get_bitcoin_price()
         if current_bitcoin_price is None:
-            current_bitcoin_price = 0.0
-        else:
-            current_bitcoin_price = float(current_bitcoin_price.replace(',', ''))
+            current_bitcoin_price = 0.0  # Assign a default value if price is None
 
         current_silver_price, silver_price_message = get_silver_price()
         if current_silver_price is None:
-            current_silver_price = 0.0
+            current_silver_price = 0.0  # Assign a default value if price is None
 
-
+        # Calculate Bitcoin and Silver profit/loss
         bitcoin_profit_loss = (current_bitcoin_price - avg_bitcoin_price) * total_bitcoin_quantity
         silver_profit_loss = (current_silver_price - avg_silver_price) * total_silver_weight
 
-
+        # Calculate Bitcoin and Silver profit/loss percentage
         bitcoin_profit_percentage = (bitcoin_profit_loss / total_bitcoin_price) * 100 if total_bitcoin_price else 0.0
         silver_profit_percentage = (silver_profit_loss / total_silver_price) * 100 if total_silver_price else 0.0
 
-
+        # Calculate Real Estate profit/loss
         real_estate_profit_loss = total_real_estate_evaluation_price - total_real_estate_purchase_price
         real_estate_profit_percentage = (real_estate_profit_loss / total_real_estate_purchase_price) * 100 if total_real_estate_purchase_price else 0.0
 
-
+        # Calculate stock totals and profit/loss
         stock_data = {}
         for stock in portfolio.stocks.all():
             if stock.ticker not in stock_data:
@@ -79,13 +77,13 @@ class PortfolioView(View):
             data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data['total_price'] else 0.0
             total_stock_profit_loss += data['profit_loss']
 
-
+        # Calculate total stock profit/loss percentage
         total_stock_profit_percentage = (total_stock_profit_loss / total_spent_on_stocks) * 100 if total_spent_on_stocks else 0.0
 
-
+        # Calculate total investment cost
         total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
 
-
+        # Calculate total profit/loss
         total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss + total_stock_profit_loss
         total_profit_percentage = (total_profit_loss / total_investment_cost) * 100 if total_investment_cost else 0.0
 

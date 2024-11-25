@@ -1,13 +1,16 @@
-import requests, redis
-from django.http import JsonResponse
+import requests
+from portfolio.models import LastAvailablePrice
+from decimal import Decimal
+import os
 
-LAST_SILVER_PRICE = None
-LAST_BITCOIN_PRICE = None
-LAST_STOCK_PRICES = {}
+
+def get_last_available_price(symbol):
+    last_price = LastAvailablePrice.objects.filter(symbol=symbol).first()
+    return float(last_price.price) if last_price else 0.0
+
 
 def get_silver_price():
-    global LAST_SILVER_PRICE
-    api_key = "goldapi-btin6sm3artlym-io"
+    api_key = os.getenv("GOLDAPI_KEY")
     symbol = "XAG"
     curr = "USD"
     date = ""
@@ -24,69 +27,75 @@ def get_silver_price():
         response.raise_for_status()
         data = response.json()
 
-        if response.status_code == [429, 403]:
-            return LAST_SILVER_PRICE, "API request limit exceeded. API limit reached."
-        LAST_SILVER_PRICE = data['price']
-        return LAST_SILVER_PRICE, None
+        if response.status_code == 429 or response.status_code == 403:
+            last_price = get_last_available_price("silver")
+            return last_price, "API request limit exceeded. Displaying last available price."
+
+        price = data.get('price')
+        if price is None:
+            raise ValueError("Price not found in response")
+
+        last_price, created = LastAvailablePrice.objects.update_or_create(
+            symbol="silver",
+            defaults={"price": Decimal(price)}
+        )
+        return price, None
     except Exception as e:
         print(f"Error fetching silver price: {e}")
-        return LAST_SILVER_PRICE, "Error fetching silver price. API limit reached."
+        last_price = get_last_available_price("silver")
+        return last_price, "Error fetching silver price. Displaying last available price."
 
 
 def get_bitcoin_price():
-    global LAST_BITCOIN_PRICE
     try:
         url = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
         response = requests.get(url)
-        if response.status_code == 429:
-            return LAST_BITCOIN_PRICE, "API request limit exceeded. Displaying last available price"
+        response.raise_for_status()
         data = response.json()
-        LAST_BITCOIN_PRICE = data['bpi']['USD']['rate']
-        return LAST_BITCOIN_PRICE, None
+
+        if response.status_code == 429:
+            last_price = get_last_available_price("bitcoin")
+            return last_price, "API request limit exceeded. Displaying last available price."
+
+        price = data['bpi']['USD']['rate'].replace(',', '')
+        last_price, created = LastAvailablePrice.objects.update_or_create(
+            symbol="bitcoin",
+            defaults={"price": Decimal(price)}
+        )
+        return float(price), None
     except Exception as e:
         print(f"Error fetching Bitcoin price: {e}")
-        return LAST_BITCOIN_PRICE, "Error fetching Bitcoin price. Displaying last available price"
+        last_price = get_last_available_price("bitcoin")
+        return last_price, "Error fetching Bitcoin price. Displaying last available price."
 
 
-ALPHA_VANTAGE_API_KEY = '84G9TTF1ZLAGSH0B'
+ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
+
 
 def get_stock_price(symbol):
-    global LAST_STOCK_PRICES
     try:
         url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={ALPHA_VANTAGE_API_KEY}&outputsize=compact'
         response = requests.get(url)
+        response.raise_for_status()
         data = response.json()
 
-
         if "Note" in data and "Thank you for using Alpha Vantage!" in data["Note"]:
-            last_price = LAST_STOCK_PRICES.get(symbol)
-            if last_price:
-                return {"current_stock_price": float(last_price), "error": "API limit reached. Displaying last available price."}
-            else:
-                return {"current_stock_price": 0.0, "error": "API limit reached. No last available price."}
-
+            last_price = get_last_available_price(symbol)
+            return {"current_stock_price": last_price, "error": "API limit reached. Displaying last available price."}
 
         if "Error Message" in data:
             return {"current_stock_price": 0.0, "error": "Unrecognized ticker."}
 
-
         last_refreshed = max(data['Time Series (Daily)'].keys())
         current_price = float(data['Time Series (Daily)'][last_refreshed]['4. close'])
 
-
-        LAST_STOCK_PRICES[symbol] = current_price
-
+        last_price, created = LastAvailablePrice.objects.update_or_create(
+            symbol=symbol,
+            defaults={"price": Decimal(current_price)}
+        )
         return {"current_stock_price": current_price, "error": None}
     except Exception as e:
         print(f"Error fetching stock price for {symbol}: {e}")
-
-
-        last_price = LAST_STOCK_PRICES.get(symbol)
-        if last_price:
-            return {"current_stock_price": float(last_price), "error": "Error fetching stock price. Displaying last available price."}
-        else:
-            return {"current_stock_price": 0.0, "error": "Error fetching stock price. API limit reached."}
-
-
-def last_stock_prices_view(request):
-    return JsonResponse(LAST_STOCK_PRICES)
+        last_price = get_last_available_price(symbol)
+        return {"current_stock_price": last_price,
+                "error": "Error fetching stock price. Displaying last available price."}
