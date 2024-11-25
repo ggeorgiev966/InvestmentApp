@@ -11,9 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
-
-from InvestmentApp import email_config
-from InvestmentApp.email_config import EMAIL_USER
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -141,16 +139,16 @@ LOGOUT_REDIRECT_URL = 'home'
 
 COINDESK_API_URL = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
 
-
-EMAIL_USER = email_config.EMAIL_USER
-EMAIL_PASSWORD = email_config.EMAIL_PASSWORD
+BASE_DIR = Path(__file__).resolve().parent.parent
+dotenv_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(dotenv_path)
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.abv.bg'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = EMAIL_USER
-EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER")
 
-DEFAULT_FROM_EMAIL = EMAIL_USER
 
