@@ -47,8 +47,8 @@
                         </div>
                     </div>
                 </div>
-            
-            
+
+
                 <div class="card mt-3">
                     <div class="card-header">Silver</div>
                     <div class="card-body">
@@ -164,7 +164,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
             function updatePriceWithValidation(url, priceElementId, errorElementId, priceKey) {
                 fetch(url)
                     .then(response => response.json())
@@ -180,15 +179,18 @@
                         }
 
                         const price = parseFloat(data[priceKey]);
+                        const error = data.error; // Fetch the error message from the API response
+
                         if (!isNaN(price) && price !== 0.0) {
-
+                            // Valid price
                             priceElement.innerText = price.toFixed(2);
-                            errorElement.innerText = "";  // Clear any previous error
                         } else {
-
-                            priceElement.innerText = "0.00";
-                            errorElement.innerText = `Error fetching ${priceKey.replace('current_', '').replace('_price', '').replace('_', ' ')} price. API limit reached.`;
+                            // Invalid or unavailable price
+                            priceElement.innerText = "0.00"; // Default for unavailable price
                         }
+
+                        // Display error message if present
+                        errorElement.innerText = error || ""; // Clear error if no message is present
                     })
                     .catch(error => {
                         console.error(`Error fetching data from ${url}:`, error);
@@ -201,7 +203,6 @@
                         }
                     });
             }
-
 
             const priceEndpoints = [
                 {
@@ -218,7 +219,6 @@
                 }
             ];
 
-
             {% for stock in stocks %}
                 priceEndpoints.push({
                     url: `/api/stock-price/{{ stock.ticker }}/`,
@@ -228,15 +228,15 @@
                 });
             {% endfor %}
 
-
             priceEndpoints.forEach(endpoint => {
                 updatePriceWithValidation(endpoint.url, endpoint.priceElementId, endpoint.errorElementId, endpoint.priceKey);
             });
 
-
             setInterval(() => updatePriceWithValidation("{% url 'bitcoin_price_view' %}", 'bitcoin-price', 'bitcoin-error', 'current_bitcoin_price'), 60000);
             setInterval(() => updatePriceWithValidation("{% url 'silver_price_view' %}", 'silver-price', 'silver-error', 'current_silver_price'), 60000);
         });
+
+
     </script>
 
 
