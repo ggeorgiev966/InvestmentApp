@@ -10,15 +10,11 @@ def get_last_available_price(symbol):
 
 
 def get_silver_price():
-    api_key = os.getenv("GOLDAPI_KEY")
     symbol = "XAG"
-    curr = "USD"
-    date = ""
 
-    url = f"https://www.goldapi.io/api/{symbol}/{curr}{date}"
+    url = f"https://api.gold-api.com/price/{symbol}"
 
     headers = {
-        "x-access-token": api_key,
         "Content-Type": "application/json"
     }
 
