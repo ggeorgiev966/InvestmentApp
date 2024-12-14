@@ -20,72 +20,53 @@ class PortfolioView(View):
     login_url = 'login'
 
     def get(self, request):
-        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
-        portfolio, created = InvestmentPortfolio.objects.get_or_create(user=user_profile)
+
+        user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        portfolio, _ = InvestmentPortfolio.objects.get_or_create(user=user_profile)
+
+
+        real_estates = RealEstate.objects.filter(user=request.user)
 
 
         total_bitcoin_quantity = sum(float(bitcoin.quantity) for bitcoin in portfolio.bitcoins.all())
         total_bitcoin_price = sum(float(bitcoin.quantity) * float(bitcoin.price) for bitcoin in portfolio.bitcoins.all())
         avg_bitcoin_price = total_bitcoin_price / total_bitcoin_quantity if total_bitcoin_quantity else 0.0
 
+
         total_silver_weight = sum(float(silver.weight) for silver in portfolio.silvers.all())
         total_silver_price = sum(float(silver.weight) * float(silver.price) for silver in portfolio.silvers.all())
         avg_silver_price = total_silver_price / total_silver_weight if total_silver_weight else 0.0
 
-        total_spent_on_stocks = 0.0
-        total_real_estate_purchase_price = sum(float(realestate.purchase_price) for realestate in RealEstate.objects.filter(user=request.user))
-        total_real_estate_evaluation_price = sum(float(realestate.current_evaluation_price) for realestate in RealEstate.objects.filter(user=request.user) if realestate.current_evaluation_price)
+
+        total_real_estate_purchase_price = sum(float(realestate.purchase_price) for realestate in real_estates)
+        total_real_estate_evaluation_price = sum(float(realestate.current_evaluation_price) for realestate in real_estates if realestate.current_evaluation_price)
 
 
         current_bitcoin_price, bitcoin_price_message = get_bitcoin_price()
-        if current_bitcoin_price is None:
-            current_bitcoin_price = 0.0
-
         current_silver_price, silver_price_message = get_silver_price()
-        if current_silver_price is None:
-            current_silver_price = 0.0
+        current_bitcoin_price = current_bitcoin_price or 0.0
+        current_silver_price = current_silver_price or 0.0
 
 
         bitcoin_profit_loss = (current_bitcoin_price - avg_bitcoin_price) * total_bitcoin_quantity
         silver_profit_loss = (current_silver_price - avg_silver_price) * total_silver_weight
-
+        real_estate_profit_loss = total_real_estate_evaluation_price - total_real_estate_purchase_price
 
         bitcoin_profit_percentage = (bitcoin_profit_loss / total_bitcoin_price) * 100 if total_bitcoin_price else 0.0
         silver_profit_percentage = (silver_profit_loss / total_silver_price) * 100 if total_silver_price else 0.0
-
-
-        real_estate_profit_loss = total_real_estate_evaluation_price - total_real_estate_purchase_price
         real_estate_profit_percentage = (real_estate_profit_loss / total_real_estate_purchase_price) * 100 if total_real_estate_purchase_price else 0.0
 
 
-        stock_data = {}
-        for stock in portfolio.stocks.all():
-            if stock.ticker not in stock_data:
-                stock_data[stock.ticker] = {'quantity': 0, 'total_price': 0, 'error': ""}
-            stock_data[stock.ticker]['quantity'] += float(stock.quantity)
-            stock_data[stock.ticker]['total_price'] += float(stock.quantity) * float(stock.price)
-            total_spent_on_stocks += float(stock.quantity) * float(stock.price)
-
-        total_stock_profit_loss = 0.0
-        for ticker, data in stock_data.items():
-            data['avg_price'] = data['total_price'] / data['quantity'] if data['quantity'] else 0.0
-            current_price_data = get_stock_price(ticker)
-            data['current_price'] = current_price_data['current_stock_price'] if isinstance(
-                current_price_data['current_stock_price'], (int, float)) else 0.0
-            data['error'] = current_price_data['error']
-            data['profit_loss'] = (data['current_price'] - data['avg_price']) * data['quantity']
-            data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data['total_price'] else 0.0
-            total_stock_profit_loss += data['profit_loss']
-
-
+        stock_data = self.get_stock_data(portfolio)
+        total_stock_profit_loss = sum(data['profit_loss'] for data in stock_data.values())
+        total_spent_on_stocks = sum(data['total_price'] for data in stock_data.values())
         total_stock_profit_percentage = (total_stock_profit_loss / total_spent_on_stocks) * 100 if total_spent_on_stocks else 0.0
 
 
         total_investment_cost = total_bitcoin_price + total_silver_price + total_real_estate_purchase_price + total_spent_on_stocks
-
-
         total_profit_loss = bitcoin_profit_loss + silver_profit_loss + real_estate_profit_loss + total_stock_profit_loss
         total_profit_percentage = (total_profit_loss / total_investment_cost) * 100 if total_investment_cost else 0.0
+
 
         context = {
             'portfolio': portfolio,
@@ -115,13 +96,36 @@ class PortfolioView(View):
             'stock_data': stock_data,
             'bitcoins': portfolio.bitcoins.all(),
             'silvers': portfolio.silvers.all(),
-            'realestates': RealEstate.objects.filter(user=request.user),
+            'realestates': real_estates,
             'bitcoin_price_message': bitcoin_price_message,
             'silver_price_message': silver_price_message,
         }
 
         return render(request, 'portfolio/dashboard.html', context)
 
+    def get_stock_data(self, portfolio):
+
+        stock_data = {}
+        total_spent_on_stocks = 0.0
+
+        for stock in portfolio.stocks.all():
+            if stock.ticker not in stock_data:
+                stock_data[stock.ticker] = {'quantity': 0, 'total_price': 0, 'error': ""}
+            stock_data[stock.ticker]['quantity'] += float(stock.quantity)
+            stock_data[stock.ticker]['total_price'] += float(stock.quantity) * float(stock.price)
+            total_spent_on_stocks += float(stock.quantity) * float(stock.price)
+
+
+        for ticker, data in stock_data.items():
+            data['avg_price'] = data['total_price'] / data['quantity'] if data['quantity'] else 0.0
+            current_price_data = get_stock_price(ticker)
+            data['current_price'] = current_price_data['current_stock_price'] if isinstance(
+                current_price_data['current_stock_price'], (int, float)) else 0.0
+            data['error'] = current_price_data['error']
+            data['profit_loss'] = (data['current_price'] - data['avg_price']) * data['quantity']
+            data['profit_percentage'] = (data['profit_loss'] / data['total_price']) * 100 if data['total_price'] else 0.0
+
+        return stock_data
 
 
 @method_decorator(login_required, name='dispatch')
