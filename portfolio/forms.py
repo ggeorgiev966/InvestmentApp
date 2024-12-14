@@ -68,5 +68,4 @@ class CustomAuthenticationForm(AuthenticationForm):
         'invalid_login': (
             "Invalid username or password. Please try again."
         ),
-        'inactive': ("This account is inactive."),
     }
