@@ -7,7 +7,6 @@ class StockAdmin(admin.ModelAdmin):
     list_display = ('name', 'ticker', 'price', 'purchased_at', 'user',)
     search_fields = ('name', 'ticker')
     search_help_text = 'Search by stock name or ticker symbol.'
-    ordering = ('price',)
     list_filter = ('user', 'purchased_at')
     date_hierarchy = 'purchased_at'
 
