@@ -150,22 +150,11 @@ class StockUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'portfolio/edit_stock.html'
     success_url = reverse_lazy('portfolio')
 
-def home(request):
-    return render(request, 'portfolio/home.html')
-
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            user_profile = UserProfile.objects.create(user=user)
-            InvestmentPortfolio.objects.create(user=user_profile)
-            login(request, user)
-            return redirect('portfolio')
-    else:
-        form = UserCreationForm()
-    return render(request, 'portfolio/register.html', {'form': form})
-
+class DeleteStockView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        stock = get_object_or_404(Stock, pk=pk)
+        stock.delete()
+        return redirect('portfolio')
 
 @method_decorator(login_required, name='dispatch')
 class BitcoinCreateView(View):
@@ -220,40 +209,10 @@ class SilverUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'portfolio/edit_silver.html'
     success_url = reverse_lazy('portfolio')
 
-
-class DeleteStockView(LoginRequiredMixin, View):
-    def post(self, request, pk):
-        stock = get_object_or_404(Stock, pk=pk)
-        stock.delete()
-        return redirect('portfolio')
-
 class DeleteSilverView(LoginRequiredMixin, View):
     def post(self, request, pk):
         silver = get_object_or_404(Silver, pk=pk)
         silver.delete()
-        return redirect('portfolio')
-
-class ConfirmDeleteView(LoginRequiredMixin, View):
-    model_map = {
-        'stock': Stock,
-        'bitcoin': Bitcoin,
-        'silver': Silver,
-        'realestate': RealEstate
-    }
-
-    def get(self, request, model_name, pk):
-        model = self.model_map.get(model_name)
-        if not model:
-            return redirect('portfolio')
-        item = get_object_or_404(model, pk=pk)
-        return render(request, 'portfolio/confirm_delete.html', {'item': item, 'model_name': model_name})
-
-    def post(self, request, model_name, pk):
-        model = self.model_map.get(model_name)
-        if not model:
-            return redirect('portfolio')
-        item = get_object_or_404(model, pk=pk)
-        item.delete()
         return redirect('portfolio')
 
 @method_decorator(login_required, name='dispatch')
@@ -282,6 +241,30 @@ class DeleteRealEstateView(LoginRequiredMixin, View):
         realestate = get_object_or_404(RealEstate, pk=pk)
         realestate.delete()
         return redirect('portfolio')
+
+class ConfirmDeleteView(LoginRequiredMixin, View):
+    model_map = {
+        'stock': Stock,
+        'bitcoin': Bitcoin,
+        'silver': Silver,
+        'realestate': RealEstate
+    }
+
+    def get(self, request, model_name, pk):
+        model = self.model_map.get(model_name)
+        if not model:
+            return redirect('portfolio')
+        item = get_object_or_404(model, pk=pk)
+        return render(request, 'portfolio/confirm_delete.html', {'item': item, 'model_name': model_name})
+
+    def post(self, request, model_name, pk):
+        model = self.model_map.get(model_name)
+        if not model:
+            return redirect('portfolio')
+        item = get_object_or_404(model, pk=pk)
+        item.delete()
+        return redirect('portfolio')
+
 
 def bitcoin_price_view(request):
     current_bitcoin_price, message = get_bitcoin_price()
@@ -334,6 +317,21 @@ class CustomLoginView(auth_views.LoginView):
     authentication_form = CustomAuthenticationForm
     template_name = 'portfolio/login.html'
 
+def home(request):
+    return render(request, 'portfolio/home.html')
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            user_profile = UserProfile.objects.create(user=user)
+            InvestmentPortfolio.objects.create(user=user_profile)
+            login(request, user)
+            return redirect('portfolio')
+    else:
+        form = UserCreationForm()
+    return render(request, 'portfolio/register.html', {'form': form})
 
 
 
